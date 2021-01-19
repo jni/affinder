@@ -27,8 +27,9 @@ def next_layer_callback(
         ):
     pts0, pts1 = reference_points_layer.data, moving_points_layer.data
     n0, n1 = len(pts0), len(pts1)
+    ndim = pts0.shape[1]
     if reference_points_layer.selected:
-        if n0 < 3:
+        if n0 < ndim + 1:
             return
         if n0 > n1:
             reference_points_layer.selected = False
@@ -40,7 +41,7 @@ def next_layer_callback(
         if n1 == n0:
             # we just added enough points:
             # estimate transform, go back to layer0
-            if n0 > 2:
+            if n0 > ndim:
                 mat = calculate_transform(pts0, pts1, model_class=model_class)
                 moving_image_layer.affine = mat.params
                 moving_points_layer.affine = mat.params
