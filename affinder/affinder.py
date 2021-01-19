@@ -44,8 +44,12 @@ def next_layer_callback(
             # estimate transform, go back to layer0
             if n0 > ndim:
                 mat = calculate_transform(pts0, pts1, model_class=model_class)
-                moving_image_layer.affine = mat.params
-                moving_points_layer.affine = mat.params
+                moving_image_layer.affine = (
+                        reference_image_layer.affine.affine_matrix @ mat.params
+                        )
+                moving_points_layer.affine = (
+                        reference_image_layer.affine.affine_matrix @ mat.params
+                        )
             reference_points_layer.selected = True
             moving_points_layer.selected = False
             reference_points_layer.mode = 'add'
@@ -72,7 +76,7 @@ def start_affinder(
             (moving, (1.0, 0.498, 0.055, 1.0)),
             ]:
         new_layer = napari.layers.Points(
-                ndim=layer.ndim, name=layer.name + '_pts'
+                ndim=layer.ndim, name=layer.name + '_pts', affine=layer.affine
                 )
         new_layer.current_face_color = color
         viewer.layers.append(new_layer)
