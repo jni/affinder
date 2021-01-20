@@ -120,6 +120,7 @@ def start_affinder(
 
         # change the button/mode for next run
         start_affinder._call_button.text = 'Finish'
+
     else:  # we are in Finish mode
         close_affinder()
         start_affinder._call_button.text = 'Start'
@@ -152,6 +153,9 @@ def main():
     viewer = napari.Viewer()
     if len(fns) > 0:
         viewer.open(fns, stack=False)
+    # TODO: this should be removed once the napari widgets drawer
+    # is cleaned up and handles this sort of thing natively.
+    start_affinder.native_layout.addStretch()
     viewer.window.add_dock_widget(start_affinder, area='right')
     napari.run()
 
