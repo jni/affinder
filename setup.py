@@ -44,7 +44,7 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
-        #'Framework :: napari',
+        'Framework :: napari',
         'Topic :: Software Development :: Testing',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
@@ -55,9 +55,7 @@ setup(
         'License :: OSI Approved :: BSD License',
     ],
     entry_points={
-        #'napari.plugin': [
-        #    'affinder = affinder',
-        #],
-        'console_scripts': ['affinder=affinder.main:main']
+        'console_scripts': ['affinder=affinder.main:main'],
+        'napari.plugin': ['affinder = affinder.plugin'],
     },
 )
