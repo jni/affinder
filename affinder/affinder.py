@@ -74,7 +74,6 @@ def start_affinder(
         model: AffineTransformChoices,
         viewer : 'napari.viewer.Viewer',
         ):
-    import napari
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
     if mode == 'Start':
@@ -85,11 +84,12 @@ def start_affinder(
                 (reference, (0.122, 0.467, 0.706, 1.0)),
                 (moving, (1.0, 0.498, 0.055, 1.0)),
                 ]:
-            new_layer = napari.layers.Points(
-                    ndim=layer.ndim, name=layer.name + '_pts', affine=layer.affine
+            new_layer = viewer.add_points(
+                    ndim=layer.ndim,
+                    name=layer.name + '_pts',
+                    affine=layer.affine,
+                    face_color=[color],
                     )
-            new_layer.current_face_color = color
-            viewer.layers.append(new_layer)
             points_layers.append(new_layer)
         pts_layer0 = points_layers[0]
         pts_layer1 = points_layers[1]
