@@ -57,6 +57,14 @@ def next_layer_callback(
             viewer.layers.move(viewer.layers.index(reference_points_layer), -1)
         
 
+# make a bindable function to shut things down
+@magicgui
+def close_affinder(layers, callback):
+    for layer in layers:
+        layer.events.data.disconnect(callback)
+        layer.mode = 'pan_zoom'
+
+
 @magicgui(
         call_button='Start',
         layout='vertical',
@@ -68,52 +76,53 @@ def start_affinder(
         model: AffineTransformChoices,
         viewer : napari.Viewer,
         ):
-    # make a points layer for each image
-    points_layers = []
-    # Use C0 and C1 from matplotlib color cycle
-    for layer, color in [
-            (reference, (0.122, 0.467, 0.706, 1.0)),
-            (moving, (1.0, 0.498, 0.055, 1.0)),
-            ]:
-        new_layer = napari.layers.Points(
-                ndim=layer.ndim, name=layer.name + '_pts', affine=layer.affine
-                )
-        new_layer.current_face_color = color
-        viewer.layers.append(new_layer)
-        points_layers.append(new_layer)
-    pts_layer0 = points_layers[0]
-    pts_layer1 = points_layers[1]
+    mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
-    # make a callback for points added
-    callback = next_layer_callback(
-        viewer=viewer,
-        reference_image_layer=reference,
-        reference_points_layer=pts_layer0,
-        moving_image_layer=moving,
-        moving_points_layer=pts_layer1,
-        model_class=model.value,
-        )
-    pts_layer0.events.data.connect(callback)
-    pts_layer1.events.data.connect(callback)
+    if mode == 'Start':
+        # make a points layer for each image
+        points_layers = []
+        # Use C0 and C1 from matplotlib color cycle
+        for layer, color in [
+                (reference, (0.122, 0.467, 0.706, 1.0)),
+                (moving, (1.0, 0.498, 0.055, 1.0)),
+                ]:
+            new_layer = napari.layers.Points(
+                    ndim=layer.ndim, name=layer.name + '_pts', affine=layer.affine
+                    )
+            new_layer.current_face_color = color
+            viewer.layers.append(new_layer)
+            points_layers.append(new_layer)
+        pts_layer0 = points_layers[0]
+        pts_layer1 = points_layers[1]
 
-    # make a button to shut things down
-    @magicgui(call_button='Finish')
-    def close_affinder(viewer: napari.Viewer):
-        layers = [pts_layer0, pts_layer1]
-        for layer in layers:
-            layer.events.data.disconnect(callback)
-            layer.mode = 'pan_zoom'
-        start_affinder.remove(close_affinder)
+        # make a callback for points added
+        callback = next_layer_callback(
+            viewer=viewer,
+            reference_image_layer=reference,
+            reference_points_layer=pts_layer0,
+            moving_image_layer=moving,
+            moving_points_layer=pts_layer1,
+            model_class=model.value,
+            )
+        pts_layer0.events.data.connect(callback)
+        pts_layer1.events.data.connect(callback)
 
-    start_affinder.append(close_affinder)
+        # get the layer order started
+        for layer in [moving, pts_layer1, reference, pts_layer0]:
+            viewer.layers.move(viewer.layers.index(layer), -1)
 
-    # get the layer order started
-    for layer in [moving, pts_layer1, reference, pts_layer0]:
-        viewer.layers.move(viewer.layers.index(layer), -1)
-    
-    viewer.layers.unselect_all()
-    pts_layer0.selected = True
-    pts_layer0.mode = 'add'
+        viewer.layers.unselect_all()
+        pts_layer0.selected = True
+        pts_layer0.mode = 'add'
+
+        close_affinder.layers.bind(points_layers)
+        close_affinder.callback.bind(callback)
+
+        # change the button/mode for next run
+        start_affinder._call_button.text = 'Finish'
+    else:  # we are in Finish mode
+        close_affinder()
+        start_affinder._call_button.text = 'Start'
 
 
 def calculate_transform(src, dst, model_class=AffineTransform):
