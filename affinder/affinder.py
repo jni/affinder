@@ -72,7 +72,7 @@ def start_affinder(
         reference: 'napari.layers.Image',
         moving: 'napari.layers.Image',
         model: AffineTransformChoices,
-        viewer : 'napari.Viewer',
+        viewer : 'napari.viewer.Viewer',
         ):
     import napari
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
