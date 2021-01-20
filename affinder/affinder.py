@@ -1,7 +1,6 @@
 from enum import Enum
 import toolz as tz
 from magicgui import magicgui
-import napari
 from skimage.transform import (
     AffineTransform,
     EuclideanTransform,
@@ -70,11 +69,12 @@ def close_affinder(layers, callback):
         viewer={'visible': False, 'label': ' '},
         )
 def start_affinder(
-        reference: napari.layers.Image,
-        moving: napari.layers.Image,
+        reference: 'napari.layers.Image',
+        moving: 'napari.layers.Image',
         model: AffineTransformChoices,
-        viewer : napari.Viewer,
+        viewer : 'napari.Viewer',
         ):
+    import napari
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
     if mode == 'Start':
