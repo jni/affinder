@@ -103,8 +103,9 @@ def start_affinder(
         for layer in layers:
             layer.events.data.disconnect(callback)
             layer.mode = 'pan_zoom'
-        viewer.window.remove_dock_widget(close_affinder.native)
-    viewer.window.add_dock_widget(close_affinder, area='right')
+        start_affinder.remove(close_affinder)
+
+    start_affinder.append(close_affinder)
 
     # get the layer order started
     for layer in [moving, pts_layer1, reference, pts_layer0]:
