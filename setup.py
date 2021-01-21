@@ -30,18 +30,21 @@ setup(
     author_email='juan.nunez-iglesias@monash.edu',
     license='BSD-3',
     url='https://github.com/jni/affinder',
-    description='Quickly find the affine matrix mapping one image to another using manual correspondence points annotation',
+    description=(
+        'Quickly find the affine matrix mapping one image to another using '
+        'manual correspondence points annotation'
+    ),
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
     packages=find_packages(),
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     install_requires=requirements,
     use_scm_version=use_scm,
     setup_requires=['setuptools_scm'],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
-        "Framework :: napari"
+        #'Framework :: napari',
         'Topic :: Software Development :: Testing',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
