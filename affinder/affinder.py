@@ -1,4 +1,3 @@
-import sys
 from enum import Enum
 import toolz as tz
 from magicgui import magicgui
@@ -146,15 +145,3 @@ def calculate_transform(src, dst, model_class=AffineTransform):
     model.estimate(dst, src)  # we want the inverse
     return model
 
-
-def main():
-    fns = sys.argv[1:]
-    viewer = napari.Viewer()
-    if len(fns) > 0:
-        viewer.open(fns, stack=False)
-    viewer.window.add_dock_widget(start_affinder, area='right')
-    napari.run()
-
-
-if __name__ == '__main__':
-    main()
