@@ -55,5 +55,6 @@ setup(
         #'napari.plugin': [
         #    'affinder = affinder',
         #],
+        'console_scripts': ['affinder=affinder.main:main']
     },
 )
