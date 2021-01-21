@@ -52,8 +52,8 @@ setup(
         'License :: OSI Approved :: BSD License',
     ],
     entry_points={
-        'napari.plugin': [
-            'affinder = affinder',
-        ],
+        #'napari.plugin': [
+        #    'affinder = affinder',
+        #],
     },
 )
