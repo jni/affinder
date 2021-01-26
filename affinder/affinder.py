@@ -92,6 +92,8 @@ def start_affinder(
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
     if mode == 'Start':
+        # focus on the reference layer
+        reset_view(viewer, reference)
         # make a points layer for each image
         points_layers = []
         # Use C0 and C1 from matplotlib color cycle
