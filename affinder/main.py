@@ -8,7 +8,7 @@ def main():
     viewer = napari.Viewer()
     if len(fns) > 0:
         viewer.open(fns, stack=False)
-    viewer.window.add_dock_widget(start_affinder, area='right')
+    viewer.window.add_dock_widget(start_affinder(), area='right')
     napari.run()
 
 

@@ -1,6 +1,6 @@
 from enum import Enum
 import toolz as tz
-from magicgui import magicgui
+from magicgui import magicgui, magic_factory
 from skimage.transform import (
     AffineTransform,
     EuclideanTransform,
@@ -63,7 +63,7 @@ def close_affinder(layers, callback):
         layer.mode = 'pan_zoom'
 
 
-@magicgui(
+@magic_factory(
         call_button='Start',
         layout='vertical',
         viewer={'visible': False, 'label': ' '},
