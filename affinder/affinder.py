@@ -42,6 +42,8 @@ def next_layer_callback(
     if reference_points_layer.selected:
         if n0 < ndim + 1:
             return
+        if n0 == ndim + 1:
+            reset_view(viewer, moving_image_layer)
         if n0 > n1:
             reference_points_layer.selected = False
             moving_points_layer.selected = True
