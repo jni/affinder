@@ -1,6 +1,7 @@
 from enum import Enum
 import toolz as tz
 from magicgui import magicgui, magic_factory
+import numpy as np
 from skimage.transform import (
     AffineTransform,
     EuclideanTransform,
@@ -12,6 +13,17 @@ class AffineTransformChoices(Enum):
     affine=AffineTransform
     Euclidean=EuclideanTransform
     similarity=SimilarityTransform
+
+
+def reset_view(viewer: 'napari.Viewer', layer: 'napari.layers.Layer'):
+    if viewer.dims.ndisplay != 2:
+        return
+    extent = layer.extent.world[:, viewer.dims.displayed]
+    size = extent[1] - extent[0]
+    center = extent[0] + size / 2
+    viewer.camera.center = center
+    viewer.camera.zoom = np.min(viewer._canvas_size) / np.max(size)
+
 
 @tz.curry
 def next_layer_callback(
@@ -53,6 +65,7 @@ def next_layer_callback(
             reference_points_layer.mode = 'add'
             viewer.layers.move(viewer.layers.index(reference_image_layer), -1)
             viewer.layers.move(viewer.layers.index(reference_points_layer), -1)
+            reset_view(viewer, reference_image_layer)
         
 
 # make a bindable function to shut things down
