@@ -1,6 +1,7 @@
 from enum import Enum
+import pathlib
 import toolz as tz
-from magicgui import magicgui, magic_factory, types
+from magicgui import magicgui, magic_factory
 import numpy as np
 from skimage.transform import (
     AffineTransform,
@@ -88,7 +89,7 @@ def start_affinder(
         reference: 'napari.layers.Image',
         moving: 'napari.layers.Image',
         model: AffineTransformChoices,
-        output: types.PathLike,
+        output: pathlib.Path,
         viewer : 'napari.viewer.Viewer',
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
