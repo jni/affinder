@@ -1,4 +1,5 @@
 from enum import Enum
+import pathlib
 import toolz as tz
 from magicgui import magicgui, magic_factory
 import numpy as np
@@ -35,6 +36,7 @@ def next_layer_callback(
         moving_image_layer,
         moving_points_layer,
         model_class,
+        output,
         ):
     pts0, pts1 = reference_points_layer.data, moving_points_layer.data
     n0, n1 = len(pts0), len(pts1)
@@ -62,6 +64,8 @@ def next_layer_callback(
                 moving_points_layer.affine = (
                         reference_image_layer.affine.affine_matrix @ mat.params
                         )
+                if output is not None:
+                    np.savetxt(output, np.asarray(mat.params), delimiter=',')
             reference_points_layer.selected = True
             moving_points_layer.selected = False
             reference_points_layer.mode = 'add'
@@ -81,12 +85,14 @@ def close_affinder(layers, callback):
 @magic_factory(
         call_button='Start',
         layout='vertical',
+        output={'mode': 'w'},
         viewer={'visible': False, 'label': ' '},
         )
 def start_affinder(
         reference: 'napari.layers.Image',
         moving: 'napari.layers.Image',
         model: AffineTransformChoices,
+        output: pathlib.Path,
         viewer : 'napari.viewer.Viewer',
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
@@ -119,6 +125,7 @@ def start_affinder(
             moving_image_layer=moving,
             moving_points_layer=pts_layer1,
             model_class=model.value,
+            output=output,
             )
         pts_layer0.events.data.connect(callback)
         pts_layer1.events.data.connect(callback)
