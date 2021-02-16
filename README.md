@@ -26,6 +26,11 @@ You can install `affinder` via [pip]:
 
     pip install affinder
 
+
+## How to use
+
+Mini-tutorial
+
 ## Contributing
 
 Contributions are very welcome. Tests can be run with [tox], please ensure
