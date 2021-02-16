@@ -29,7 +29,23 @@ You can install `affinder` via [pip]:
 
 ## How to use
 
-Mini-tutorial
+Affinder is a napari plugin for quickly determining an affine transformation that can be used to register two images from a few manual point annotations.
+
+To streamline the annotation process, it is divided into two phases:
+
+1. In the first phase, The user annotates three points in the reference image using a new point layer in the viewer. The layer visibility then changes to the moving image and then annotates the corresponding points in the same order. (For volumes, the initial phase requires the annotation of four control point pairs.) As soon as enough control point pairs have been added to determine an initial affine transformation, this transformation
+is applied in the napari viewer and the annotation mode changes.
+
+2. In the second phase of the annotation, the visibility of the reference layer and the active point layer for annotation are toggled automatically after each additional point. When adding a point the cursor is automatically placed in the corrsponding position determined by the current affine transform. With every added control point pair the affine transform is dynamically updated.
+
+Practical tips:
+
+* For a good initial affine estimate, try and find control points close to three corners of an image. You want to avoid situations where the control points all lie close to a single line (degenerate case) or very close to each other (this does not constrain the possible transforms well.)
+* Once the initial transform has been applied in the viewer, use the opactity slider of the image layers to blend both layers. This will quickly reveal problem areas in the images where the registration is not good. Try and improve the registration by adding control point pairs in these areas.
+
+
+
+
 
 ## Contributing
 
