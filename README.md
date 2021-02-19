@@ -31,21 +31,24 @@ You can install `affinder` via [pip]:
 
 Affinder is a napari plugin for quickly determining an affine transformation that can be used to register two images from a few manual point annotations.
 
-To streamline the annotation process, it is divided into two phases:
+The registration process consists of three steps: image loading and setup, initial registration, and registration refinement. In the following 
 
-1. In the first phase, The user annotates three points in the reference image using a new point layer in the viewer. The layer visibility then changes to the moving image and then annotates the corresponding points in the same order. (For volumes, the initial phase requires the annotation of four control point pairs.) As soon as enough control point pairs have been added to determine an initial affine transformation, this transformation
-is applied in the napari viewer and the annotation mode changes.
+1. **Image loading and setup.**
+Load the two image images to be registered into napari using
+_Open Files(s)_ from the _File_ menu. You can toggle the visibility of the layers or reorder them to see both images.
+In the affinder panel on the right select the layer with the reference image (this will remain fixed) and the moving image to be superimposed on the reference image. You can choose between several transform options, in this example we proceed with the default choice of an affine transformation. Specify the name ouf the output file in which the values of the transformation matrix will be stored.![workflow step 1 illustration](./illustrations/workflow_step1.gif) Note that one of the two images in this example is flipped across the x-axis.
 
-2. In the second phase of the annotation, the visibility of the reference layer and the active point layer for annotation are toggled automatically after each additional point. When adding a point the cursor is automatically placed in the corrsponding position determined by the current affine transform. With every added control point pair the affine transform is dynamically updated.
+1. **Initial registration.** In the affinder panel, press the start button. Two new point layers will appear in the layer panel on the left and the visibilty will switch to the reference image.  Now you have to create three points in the new point layer corresponding to the reference image. After creating the third point, the layer visibility automatically changes to the moving image and the corrsponding point layer becomes active. Now annotate the three corresponding points in the moving image, ensuring that you add them in the same order as you did in the reference image. (For volumes or other transformations, the initial number of point pairs required may be more than three.) As soon as enough control point pairs have been added to determine an initial transformation, the transformation will be applied in the viewer and the
+annotation mode changes to registration refinement.![workflow step 2 illustration](./illustrations/workflow_step2.gif)
+
+
+1. **Registration refinement**. During this phase of the annotation, the visibility of the reference layer and the active point layer for annotation are toggled automatically after an additional point is added. With each new point pair, the affine transform is updated and applied in the viewer.![workflow step 3 illustration](./illustrations/workflow_step3.gif). When you are happy with the result, click finish.
 
 Practical tips:
 
 * For a good initial affine estimate, try and find control points close to three corners of an image. You want to avoid situations where the control points all lie close to a single line (degenerate case) or very close to each other (this does not constrain the possible transforms well.)
 * Once the initial transform has been applied in the viewer, use the opactity slider of the image layers to blend both layers. This will quickly reveal problem areas in the images where the registration is not good. Try and improve the registration by adding control point pairs in these areas.
-
-
-
-
+* Make sure to mark the points accurately and try not to introduce mis-matching poit pairs. While the transformation estimation can tolerate a certain number of outliers, it is best to avoid them. During the recording of the examples above I added the points too quickly and slightly inaccurate leading to less than perfect registration. 
 
 ## Contributing
 
