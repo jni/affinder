@@ -31,7 +31,7 @@ You can install `affinder` via [pip]:
 
 Affinder is a napari plugin for quickly determining an affine transformation that can be used to register two images from a few manual point annotations.
 
-The registration process consists of three steps: image loading and setup, initial registration, and registration refinement. In the following 
+The registration process consists of three steps: image loading and setup, initial registration, and registration refinement. In the following we outline the steps and show short demonstrations [on an example image pair](./example_data/about_example.md).
 
 1. **Image loading and setup.**
 Load the two image images to be registered into napari using
