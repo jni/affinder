@@ -1,10 +1,14 @@
-import sys
+import argparse
 import napari
 from .affinder import start_affinder
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument('filenames', help='Images to load', nargs='*')
+
+
 def main():
-    fns = sys.argv[1:]
+    fns = parser.parse_args().filenames
     viewer = napari.Viewer()
     if len(fns) > 0:
         viewer.open(fns, stack=False)
