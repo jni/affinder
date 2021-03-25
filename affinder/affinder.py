@@ -86,6 +86,7 @@ def close_affinder(layers, callback):
         call_button='Start',
         layout='vertical',
         output={'mode': 'w'},
+        model={'widget_type': 'RadioButton'},
         viewer={'visible': False, 'label': ' '},
         )
 def start_affinder(
