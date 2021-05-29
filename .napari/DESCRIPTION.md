@@ -80,7 +80,7 @@ affine transformations.
 
 - [**Similarity Transform**](https://en.wikipedia.org/wiki/Similarity_(geometry)): 
 this is a "shape preserving" transformation, producing objects which are 
-geometrically similar. Translation, rotation, reflection and scaling are 
+geometrically similar. Translation, rotation, reflection and uniform scaling are 
 valid similarity transforms. Shearing is not.
 
 - [**Euclidean Transform**](https://en.wikipedia.org/wiki/Rigid_transformation):
@@ -91,7 +91,7 @@ translation and reflection but not scaling or shearing.
 # Getting Help
 
 If you find a bug with affinder, or would like support with using it, please raise an
-issue on the GitHub repository `https://github.com/jni/affinder`.
+issue on the [GitHub repository](https://github.com/jni/affinder).
 
 # How to Cite
 
