@@ -9,9 +9,7 @@ the requisite transformation matrix using Affine Transform, Euclidean Transform,
 or Similarity Transform, and performs this transformation on the
 moving image, aligning it to the reference image.
 
-
 https://user-images.githubusercontent.com/17995243/120086403-f1d0b300-c121-11eb-8000-a44a2ac54339.mp4
-
 
 
 # Who is This For?
@@ -60,8 +58,11 @@ selected when you add your third corresponding point to your moving image.
 
 ![The moving image is transformed once three points are added](https://i.imgur.com/NTne9fj.png)
 
-From there, you can continue iteratively adding sets of three points until you 
-are happy with the alignment. Click Finish to exit affinder.
+From there, you can continue iteratively adding points until you 
+are happy with the alignment. Affinder will switch focus between
+reference and moving image with each point.
+
+Click Finish to exit affinder.
 
 <a name="models"></a>
 ## Transformation Models
