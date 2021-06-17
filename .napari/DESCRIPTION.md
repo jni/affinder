@@ -36,7 +36,7 @@ transform.
 ![Dropdowns allow you to select the reference and moving layers](https://i.imgur.com/Tdbm1sX.png)
 
 Next, you can select the transformation model to use (affine is selected by default
-and is the least rigid transformation of those available). See [below](#models) for a
+and is the least rigid transformation of those available). See [below](#transformation-models) for a
 description of the different models.
 
 Finally, you can optionally select a path to a text file for saving out the
@@ -64,7 +64,6 @@ reference and moving image with each point.
 
 Click Finish to exit affinder.
 
-<a name="models"></a>
 ## Transformation Models
 
 There are three transformation models available for use with affinder.
