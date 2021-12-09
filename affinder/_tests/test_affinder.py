@@ -2,11 +2,12 @@ from skimage import data, transform
 import numpy as np
 
 
-def test_basic(make_napari_viewer):
+def test_basic(make_napari_viewer, napari_plugin_manager):
     image0 = data.camera()
     image1 = transform.rotate(image0[100:, 32:496], 60)
 
-    viewer = make_napari_viewer(block_plugin_discovery=False)
+    napari_plugin_manager.register('affinder', name='affinder')
+    viewer = make_napari_viewer()
 
     l0 = viewer.add_image(image0, colormap='green', blending='additive')
     l1 = viewer.add_image(image1, colormap='magenta', blending='additive')
