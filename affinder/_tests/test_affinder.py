@@ -6,7 +6,7 @@ def test_basic(make_napari_viewer):
     image0 = data.camera()
     image1 = transform.rotate(image0[100:, 32:496], 60)
 
-    viewer = make_napari_viewer()
+    viewer = make_napari_viewer(block_plugin_discovery=False)
 
     l0 = viewer.add_image(image0, colormap='green', blending='additive')
     l1 = viewer.add_image(image1, colormap='magenta', blending='additive')
