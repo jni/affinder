@@ -1,3 +1,5 @@
+from typing import Optional
+
 from enum import Enum
 import pathlib
 import toolz as tz
@@ -87,11 +89,11 @@ def close_affinder(layers, callback):
         viewer={'visible': False, 'label': ' '},
         )
 def start_affinder(
+        viewer: 'napari.viewer.Viewer',
         reference: 'napari.layers.Image',
         moving: 'napari.layers.Image',
         model: AffineTransformChoices,
-        output: pathlib.Path,
-        viewer: 'napari.viewer.Viewer',
+        output: Optional[pathlib.Path] = None,
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
