@@ -2,7 +2,6 @@ import argparse
 import napari
 from .affinder import start_affinder
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('filenames', help='Images to load', nargs='*')
 

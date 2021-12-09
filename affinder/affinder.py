@@ -4,16 +4,16 @@ import toolz as tz
 from magicgui import magicgui, magic_factory
 import numpy as np
 from skimage.transform import (
-    AffineTransform,
-    EuclideanTransform,
-    SimilarityTransform,
-)
+        AffineTransform,
+        EuclideanTransform,
+        SimilarityTransform,
+        )
 
 
 class AffineTransformChoices(Enum):
-    affine=AffineTransform
-    Euclidean=EuclideanTransform
-    similarity=SimilarityTransform
+    affine = AffineTransform
+    Euclidean = EuclideanTransform
+    similarity = SimilarityTransform
 
 
 def reset_view(viewer: 'napari.Viewer', layer: 'napari.layers.Layer'):
@@ -21,7 +21,7 @@ def reset_view(viewer: 'napari.Viewer', layer: 'napari.layers.Layer'):
         return
     extent = layer.extent.world[:, viewer.dims.displayed]
     size = extent[1] - extent[0]
-    center = extent[0] + size / 2
+    center = extent[0] + size/2
     viewer.camera.center = center
     viewer.camera.zoom = np.min(viewer._canvas_size) / np.max(size)
 
@@ -72,7 +72,7 @@ def next_layer_callback(
             viewer.layers.move(viewer.layers.index(reference_image_layer), -1)
             viewer.layers.move(viewer.layers.index(reference_points_layer), -1)
             reset_view(viewer, reference_image_layer)
-        
+
 
 # make a bindable function to shut things down
 @magicgui
@@ -93,7 +93,7 @@ def start_affinder(
         moving: 'napari.layers.Image',
         model: AffineTransformChoices,
         output: pathlib.Path,
-        viewer : 'napari.viewer.Viewer',
+        viewer: 'napari.viewer.Viewer',
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
@@ -119,14 +119,14 @@ def start_affinder(
 
         # make a callback for points added
         callback = next_layer_callback(
-            viewer=viewer,
-            reference_image_layer=reference,
-            reference_points_layer=pts_layer0,
-            moving_image_layer=moving,
-            moving_points_layer=pts_layer1,
-            model_class=model.value,
-            output=output,
-            )
+                viewer=viewer,
+                reference_image_layer=reference,
+                reference_points_layer=pts_layer0,
+                moving_image_layer=moving,
+                moving_points_layer=pts_layer1,
+                model_class=model.value,
+                output=output,
+                )
         pts_layer0.events.data.connect(callback)
         pts_layer1.events.data.connect(callback)
 
@@ -168,4 +168,3 @@ def calculate_transform(src, dst, model_class=AffineTransform):
     model = model_class()
     model.estimate(dst, src)  # we want the inverse
     return model
-
