@@ -41,18 +41,17 @@ def next_layer_callback(
     pts0, pts1 = reference_points_layer.data, moving_points_layer.data
     n0, n1 = len(pts0), len(pts1)
     ndim = pts0.shape[1]
-    if reference_points_layer.selected:
+    if reference_points_layer in viewer.layers.selection:
         if n0 < ndim + 1:
             return
         if n0 == ndim + 1:
             reset_view(viewer, moving_image_layer)
         if n0 > n1:
-            reference_points_layer.selected = False
-            moving_points_layer.selected = True
+            viewer.layers.selection.active = moving_points_layer
             viewer.layers.move(viewer.layers.index(moving_image_layer), -1)
             viewer.layers.move(viewer.layers.index(moving_points_layer), -1)
             moving_points_layer.mode = 'add'
-    elif moving_points_layer.selected:
+    elif moving_points_layer in viewer.layers.selection:
         if n1 == n0:
             # we just added enough points:
             # estimate transform, go back to layer0
@@ -66,8 +65,7 @@ def next_layer_callback(
                         )
                 if output is not None:
                     np.savetxt(output, np.asarray(mat.params), delimiter=',')
-            reference_points_layer.selected = True
-            moving_points_layer.selected = False
+            viewer.layers.selection.active = reference_points_layer
             reference_points_layer.mode = 'add'
             viewer.layers.move(viewer.layers.index(reference_image_layer), -1)
             viewer.layers.move(viewer.layers.index(reference_points_layer), -1)
@@ -134,8 +132,7 @@ def start_affinder(
         for layer in [moving, pts_layer1, reference, pts_layer0]:
             viewer.layers.move(viewer.layers.index(layer), -1)
 
-        viewer.layers.unselect_all()
-        pts_layer0.selected = True
+        viewer.layers.selection.active = pts_layer0
         pts_layer0.mode = 'add'
 
         close_affinder.layers.bind(points_layers)
