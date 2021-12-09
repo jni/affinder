@@ -1,19 +1,21 @@
+from typing import Optional
+
 from enum import Enum
 import pathlib
 import toolz as tz
 from magicgui import magicgui, magic_factory
 import numpy as np
 from skimage.transform import (
-    AffineTransform,
-    EuclideanTransform,
-    SimilarityTransform,
-)
+        AffineTransform,
+        EuclideanTransform,
+        SimilarityTransform,
+        )
 
 
 class AffineTransformChoices(Enum):
-    affine=AffineTransform
-    Euclidean=EuclideanTransform
-    similarity=SimilarityTransform
+    affine = AffineTransform
+    Euclidean = EuclideanTransform
+    similarity = SimilarityTransform
 
 
 def reset_view(viewer: 'napari.Viewer', layer: 'napari.layers.Layer'):
@@ -21,7 +23,7 @@ def reset_view(viewer: 'napari.Viewer', layer: 'napari.layers.Layer'):
         return
     extent = layer.extent.world[:, viewer.dims.displayed]
     size = extent[1] - extent[0]
-    center = extent[0] + size / 2
+    center = extent[0] + size/2
     viewer.camera.center = center
     viewer.camera.zoom = np.min(viewer._canvas_size) / np.max(size)
 
@@ -41,18 +43,17 @@ def next_layer_callback(
     pts0, pts1 = reference_points_layer.data, moving_points_layer.data
     n0, n1 = len(pts0), len(pts1)
     ndim = pts0.shape[1]
-    if reference_points_layer.selected:
+    if reference_points_layer in viewer.layers.selection:
         if n0 < ndim + 1:
             return
         if n0 == ndim + 1:
             reset_view(viewer, moving_image_layer)
         if n0 > n1:
-            reference_points_layer.selected = False
-            moving_points_layer.selected = True
+            viewer.layers.selection.active = moving_points_layer
             viewer.layers.move(viewer.layers.index(moving_image_layer), -1)
             viewer.layers.move(viewer.layers.index(moving_points_layer), -1)
             moving_points_layer.mode = 'add'
-    elif moving_points_layer.selected:
+    elif moving_points_layer in viewer.layers.selection:
         if n1 == n0:
             # we just added enough points:
             # estimate transform, go back to layer0
@@ -66,13 +67,12 @@ def next_layer_callback(
                         )
                 if output is not None:
                     np.savetxt(output, np.asarray(mat.params), delimiter=',')
-            reference_points_layer.selected = True
-            moving_points_layer.selected = False
+            viewer.layers.selection.active = reference_points_layer
             reference_points_layer.mode = 'add'
             viewer.layers.move(viewer.layers.index(reference_image_layer), -1)
             viewer.layers.move(viewer.layers.index(reference_points_layer), -1)
             reset_view(viewer, reference_image_layer)
-        
+
 
 # make a bindable function to shut things down
 @magicgui
@@ -89,11 +89,11 @@ def close_affinder(layers, callback):
         viewer={'visible': False, 'label': ' '},
         )
 def start_affinder(
+        viewer: 'napari.viewer.Viewer',
         reference: 'napari.layers.Image',
         moving: 'napari.layers.Image',
         model: AffineTransformChoices,
-        output: pathlib.Path,
-        viewer : 'napari.viewer.Viewer',
+        output: Optional[pathlib.Path] = None,
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
@@ -119,14 +119,14 @@ def start_affinder(
 
         # make a callback for points added
         callback = next_layer_callback(
-            viewer=viewer,
-            reference_image_layer=reference,
-            reference_points_layer=pts_layer0,
-            moving_image_layer=moving,
-            moving_points_layer=pts_layer1,
-            model_class=model.value,
-            output=output,
-            )
+                viewer=viewer,
+                reference_image_layer=reference,
+                reference_points_layer=pts_layer0,
+                moving_image_layer=moving,
+                moving_points_layer=pts_layer1,
+                model_class=model.value,
+                output=output,
+                )
         pts_layer0.events.data.connect(callback)
         pts_layer1.events.data.connect(callback)
 
@@ -134,8 +134,7 @@ def start_affinder(
         for layer in [moving, pts_layer1, reference, pts_layer0]:
             viewer.layers.move(viewer.layers.index(layer), -1)
 
-        viewer.layers.unselect_all()
-        pts_layer0.selected = True
+        viewer.layers.selection.active = pts_layer0
         pts_layer0.mode = 'add'
 
         close_affinder.layers.bind(points_layers)
@@ -168,4 +167,3 @@ def calculate_transform(src, dst, model_class=AffineTransform):
     model = model_class()
     model.estimate(dst, src)  # we want the inverse
     return model
-
