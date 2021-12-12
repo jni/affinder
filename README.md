@@ -1,10 +1,10 @@
 # affinder
 
-[![License](https://img.shields.io/pypi/l/affinder.svg?color=green)](https://github.com/napari/affinder/raw/master/LICENSE)
+[![License](https://img.shields.io/pypi/l/affinder.svg?color=green)](https://github.com/napari/affinder/raw/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/affinder.svg?color=green)](https://pypi.org/project/affinder)
 [![Python Version](https://img.shields.io/pypi/pyversions/affinder.svg?color=green)](https://python.org)
 [![tests](https://github.com/jni/affinder/workflows/tests/badge.svg)](https://github.com/jni/affinder/actions)
-[![codecov](https://codecov.io/gh/jni/affinder/branch/master/graph/badge.svg)](https://codecov.io/gh/jni/affinder)
+[![codecov](https://codecov.io/gh/jni/affinder/branch/main/graph/badge.svg)](https://codecov.io/gh/jni/affinder)
 
 Quickly find the affine matrix mapping one image to another using manual correspondence points annotation
 
