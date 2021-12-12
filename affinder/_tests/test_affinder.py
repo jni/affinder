@@ -1,4 +1,4 @@
-import affinder
+import affinder.plugin
 from skimage import data, transform
 import numpy as np
 
