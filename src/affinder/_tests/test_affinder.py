@@ -4,7 +4,7 @@ from skimage import data, transform
 import numpy as np
 
 
-def test_basic(make_napari_viewer):
+def test_basic(make_napari_viewer, tmp_path):
     image0 = data.camera()
     image1 = transform.rotate(image0[100:, 32:496], 60)
 
@@ -14,7 +14,7 @@ def test_basic(make_napari_viewer):
     l1 = my_viewer.add_image(image1, colormap='magenta', blending='additive')
 
     my_widget_factory = start_affinder()
-    my_widget_factory(viewer=my_viewer, reference=l0, moving=l1, model=AffineTransformChoices.affine)
+    my_widget_factory(viewer=my_viewer, reference=l0, moving=l1, model=AffineTransformChoices.affine, output=tmp_path / 'my_affine.txt')
 
     my_viewer.layers['image0_pts'].data = np.array([[148.19396647, 234.87779732],
                                                  [484.56804381, 240.55720892],
