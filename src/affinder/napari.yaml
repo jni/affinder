@@ -4,7 +4,7 @@ contributions:
   commands:
   - id: affinder.start_affinder
     title: Create start_affinder
-    python_name: affinder.plugin:start_affinder
+    python_name: affinder:start_affinder
   widgets:
   - command: affinder.start_affinder
     display_name: Start affinder
