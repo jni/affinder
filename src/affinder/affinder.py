@@ -91,10 +91,10 @@ def close_affinder(layers, callback):
 def start_affinder(
         viewer: 'napari.viewer.Viewer',
         reference: 'napari.layers.Layer',
+        reference_pts: 'napari.layers.Points',
         moving: 'napari.layers.Layer',
+        moving_pts: 'napari.layers.Points',
         model: AffineTransformChoices,
-        reference_pts: Optional['napari.layers.Points'] = None,
-        moving_pts: Optional['napari.layers.Points'] = None,
         output: Optional[pathlib.Path] = None,
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
@@ -102,23 +102,23 @@ def start_affinder(
     if mode == 'Start':
         # focus on the reference layer
         reset_view(viewer, reference)
-        # make a points layer for each image
-        points_layers = []
+        # set points layer for each image
+        points_layers = [reference_pts, moving_pts]
         # Use C0 and C1 from matplotlib color cycle
-        points_layers_to_add = []
-        if reference_pts is None:
-            points_layers_to_add.append((reference, (0.122, 0.467, 0.706, 1.0)))
-        if moving_pts is None:
-            points_layers_to_add.append((moving, (1.0, 0.498, 0.055, 1.0)))
-        for layer, color in points_layers_to_add:
-            new_layer = viewer.add_points(
+        points_layers_to_add = [(reference, (0.122, 0.467, 0.706, 1.0)),
+                                (moving, (1.0, 0.498, 0.055, 1.0))]
+        # make points layer if it was not specified
+        for i in range(len(points_layers)):
+            if points_layers[i] is None:
+                layer, color = points_layers_to_add[i]
+                new_layer = viewer.add_points(
                     ndim=layer.ndim,
                     name=layer.name + '_pts',
                     affine=layer.affine,
                     face_color=[color],
                     )
-            points_layers.append(new_layer)
-        pts_layer0 = points_layers[0]
+                points_layers[i] = new_layer
+        pts_layer0 = points_layers[0]####
         pts_layer1 = points_layers[1]
 
         # make a callback for points added
