@@ -91,9 +91,9 @@ def close_affinder(layers, callback):
 def start_affinder(
         viewer: 'napari.viewer.Viewer',
         reference: 'napari.layers.Layer',
-        reference_pts: 'napari.layers.Points',
+        reference_points: 'napari.layers.Points',
         moving: 'napari.layers.Layer',
-        moving_pts: 'napari.layers.Points',
+        moving_points: 'napari.layers.Points',
         model: AffineTransformChoices,
         output: Optional[pathlib.Path] = None,
         ):
@@ -103,7 +103,7 @@ def start_affinder(
         # focus on the reference layer
         reset_view(viewer, reference)
         # set points layer for each image
-        points_layers = [reference_pts, moving_pts]
+        points_layers = [reference_points, moving_points]
         # Use C0 and C1 from matplotlib color cycle
         points_layers_to_add = [(reference, (0.122, 0.467, 0.706, 1.0)),
                                 (moving, (1.0, 0.498, 0.055, 1.0))]
