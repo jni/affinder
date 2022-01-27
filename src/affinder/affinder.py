@@ -90,10 +90,11 @@ def close_affinder(layers, callback):
         )
 def start_affinder(
         viewer: 'napari.viewer.Viewer',
+        *,
         reference: 'napari.layers.Layer',
-        reference_points: 'napari.layers.Points',
+        reference_points: Optional['napari.layers.Points'] = None,
         moving: 'napari.layers.Layer',
-        moving_points: 'napari.layers.Points',
+        moving_points: Optional['napari.layers.Points'] = None,
         model: AffineTransformChoices,
         output: Optional[pathlib.Path] = None,
         ):
