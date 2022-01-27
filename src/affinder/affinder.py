@@ -90,8 +90,8 @@ def close_affinder(layers, callback):
         )
 def start_affinder(
         viewer: 'napari.viewer.Viewer',
-        reference: 'napari.layers.Image',
-        moving: 'napari.layers.Image',
+        reference: 'napari.layers.Layer',
+        moving: 'napari.layers.Layer',
         model: AffineTransformChoices,
         output: Optional[pathlib.Path] = None,
         ):
