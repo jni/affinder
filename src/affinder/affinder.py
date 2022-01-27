@@ -93,6 +93,8 @@ def start_affinder(
         reference: 'napari.layers.Layer',
         moving: 'napari.layers.Layer',
         model: AffineTransformChoices,
+        reference_pts: Optional['napari.layers.Points'] = None,
+        moving_pts: Optional['napari.layers.Points'] = None,
         output: Optional[pathlib.Path] = None,
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
@@ -103,10 +105,12 @@ def start_affinder(
         # make a points layer for each image
         points_layers = []
         # Use C0 and C1 from matplotlib color cycle
-        for layer, color in [
-                (reference, (0.122, 0.467, 0.706, 1.0)),
-                (moving, (1.0, 0.498, 0.055, 1.0)),
-                ]:
+        points_layers_to_add = []
+        if reference_pts is None:
+            points_layers_to_add.append((reference, (0.122, 0.467, 0.706, 1.0)))
+        if moving_pts is None:
+            points_layers_to_add.append((moving, (1.0, 0.498, 0.055, 1.0)))
+        for layer, color in points_layers_to_add:
             new_layer = viewer.add_points(
                     ndim=layer.ndim,
                     name=layer.name + '_pts',
