@@ -1,24 +1,26 @@
-import affinder.plugin
+from affinder import start_affinder
+from affinder.affinder import AffineTransformChoices
 from skimage import data, transform
 import numpy as np
 
 
-def test_basic(make_napari_viewer, napari_plugin_manager):
+def test_basic(make_napari_viewer, tmp_path):
     image0 = data.camera()
     image1 = transform.rotate(image0[100:, 32:496], 60)
 
-    napari_plugin_manager.register(affinder.plugin, name='affinder')
     viewer = make_napari_viewer()
 
     l0 = viewer.add_image(image0, colormap='green', blending='additive')
     l1 = viewer.add_image(image1, colormap='magenta', blending='additive')
 
-    qtwidget, widget = viewer.window.add_plugin_dock_widget(
-            'affinder', 'start_affinder'
+    my_widget_factory = start_affinder()
+    my_widget_factory(
+            viewer=viewer,
+            reference=l0,
+            moving=l1,
+            model=AffineTransformChoices.affine,
+            output=tmp_path / 'my_affine.txt'
             )
-    widget.reference.bind(l0)
-    widget.moving.bind(l1)
-    widget()
 
     viewer.layers['image0_pts'].data = np.array([[148.19396647, 234.87779732],
                                                  [484.56804381, 240.55720892],
