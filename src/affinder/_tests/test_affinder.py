@@ -14,7 +14,13 @@ def test_basic(make_napari_viewer, tmp_path):
     l1 = viewer.add_image(image1, colormap='magenta', blending='additive')
 
     my_widget_factory = start_affinder()
-    my_widget_factory(viewer=viewer, reference=l0, moving=l1, model=AffineTransformChoices.affine, output=tmp_path / 'my_affine.txt')
+    my_widget_factory(
+            viewer=viewer,
+            reference=l0,
+            moving=l1,
+            model=AffineTransformChoices.affine,
+            output=tmp_path / 'my_affine.txt'
+            )
 
     viewer.layers['image0_pts'].data = np.array([[148.19396647, 234.87779732],
                                                  [484.56804381, 240.55720892],
