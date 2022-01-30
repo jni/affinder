@@ -35,3 +35,76 @@ def test_basic(make_napari_viewer, tmp_path):
              [0., 0., 1.]])
 
     np.testing.assert_allclose(actual, expected)
+
+def test_image_shape(make_napari_viewer, tmp_path):
+    image0 = data.camera()
+    viewer = make_napari_viewer()
+
+    l0 = viewer.add_image(image0, colormap='green', blending='additive')
+    l1 = viewer.add_shapes([np.array([[0,0], [0,10], [10,10], [10,0]])],
+                           face_color='magenta', blending='additive',
+                           name="image1")
+
+    my_widget_factory = start_affinder()
+    my_widget_factory(
+            viewer=viewer,
+            reference=l0,
+            moving=l1,
+            model=AffineTransformChoices.affine,
+            output=tmp_path / 'my_affine.txt'
+            )
+
+    viewer.layers['image0_pts'].data = np.array([[139.65538415, 256.33044259],
+                                                [139.65538415, 329.40805331],
+                                                [182.00718127, 321.10377937],
+                                                [189.48102782, 260.48257956]])
+    viewer.layers['image1_pts'].data = np.array([[0,0],
+                                                 [0,10],
+                                                 [10,10],
+                                                 [10,0]])
+    actual = np.asarray(l1.affine)
+    expected = np.array(
+        [[4.63336823e+00, -3.75678505e-01, 1.41411296e+02],
+         [-2.08710281e-01, 6.72047104e+00, 2.59272410e+02],
+         [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+
+    np.testing.assert_allclose(actual, expected)
+
+
+def test_shape_shape(make_napari_viewer, tmp_path):
+    viewer = make_napari_viewer()
+
+    l0 = viewer.add_shapes([np.array([[139.65538415, 256.33044259],
+                                      [139.65538415, 329.40805331],
+                                      [182.00718127, 321.10377937],
+                                      [189.48102782, 260.48257956]])],
+                           face_color='green', blending='additive',
+                           name="image0")
+    l1 = viewer.add_shapes([np.array([[0,0], [0,10], [10,10], [10,0]])],
+                           face_color='magenta', blending='additive',
+                           name="image1")
+
+    my_widget_factory = start_affinder()
+    my_widget_factory(
+            viewer=viewer,
+            reference=l0,
+            moving=l1,
+            model=AffineTransformChoices.affine,
+            output=tmp_path / 'my_affine.txt'
+            )
+
+    viewer.layers['image0_pts'].data = np.array([[139.65538415, 256.33044259],
+                                                [139.65538415, 329.40805331],
+                                                [182.00718127, 321.10377937],
+                                                [189.48102782, 260.48257956]])
+    viewer.layers['image1_pts'].data = np.array([[0,0],
+                                                 [0,10],
+                                                 [10,10],
+                                                 [10,0]])
+    actual = np.asarray(l1.affine)
+    expected = np.array(
+        [[4.63336823e+00, -3.75678505e-01, 1.41411296e+02],
+         [-2.08710281e-01, 6.72047104e+00, 2.59272410e+02],
+         [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+
+    np.testing.assert_allclose(actual, expected)
