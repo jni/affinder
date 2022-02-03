@@ -39,11 +39,11 @@ def test_layer_types(make_napari_viewer, tmp_path, reference, moving):
     viewer = make_napari_viewer()
 
     l0 = viewer.add_layer(reference)
-    viewer.layers[-1].name = "image0"
+    viewer.layers[-1].name = "layer0"
     viewer.layers[-1].colormap = "green"
 
     l1 = viewer.add_layer(moving)
-    viewer.layers[-1].name = "image1"
+    viewer.layers[-1].name = "layer1"
     viewer.layers[-1].colormap = "magenta"
 
     my_widget_factory = start_affinder()
@@ -55,8 +55,8 @@ def test_layer_types(make_napari_viewer, tmp_path, reference, moving):
         output=tmp_path / 'my_affine.txt'
     )
 
-    viewer.layers['image0_pts'].data = layer0_pts
-    viewer.layers['image1_pts'].data = layer1_pts
+    viewer.layers['layer0_pts'].data = layer0_pts
+    viewer.layers['layer1_pts'].data = layer1_pts
 
     actual_affine = np.asarray(l1.affine)
     expected_affine = np.array(  # yapf: ignore
