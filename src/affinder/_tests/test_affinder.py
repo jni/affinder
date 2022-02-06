@@ -16,20 +16,34 @@ layer1_pts = np.array([[ 70.94741072, 117.37477536],
        [143.16475439, 118.55866623],
        [131.32584559,  83.33791256]])
 
+# get reference and moving layer types
 im0 = data.camera()
 im1 = transform.rotate(im0[100:, 32:496], 60)
 labels0 = zarr.open('./src/affinder/_tests/label0.zarr', mode='r')
 labels1 = zarr.open('./src/affinder/_tests/label1.zarr', mode='r')
 
+def make_vector_border(layer_pts):
+    vectors = np.zeros((layer_pts.shape[0], 2, layer_pts.shape[1]))
+    for n in range(layer_pts.shape[0]):
+        vectors[n, 0, :] = layer_pts[n, :]
+        vectors[n, 1, :] = layer_pts[(n + 1) % layer_pts.shape[0],
+                            :]- layer_pts[n, :]
+    return vectors
+
+vectors0 = make_vector_border(layer0_pts)
+vectors1 = make_vector_border(layer1_pts)
+
 ref = [napari.layers.Image(im0),
        napari.layers.Shapes(layer0_pts),
        napari.layers.Points(layer0_pts),
        napari.layers.Labels(labels0),
+       napari.layers.Vectors(vectors0),
        ]
 mov = [napari.layers.Image(im1),
        napari.layers.Shapes(layer1_pts),
        napari.layers.Points(layer1_pts),
        napari.layers.Labels(labels1),
+       napari.layers.Vectors(vectors1),
        ]
 # TODO add vector and ?tracks? layer types
 
