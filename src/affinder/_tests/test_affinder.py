@@ -19,8 +19,8 @@ layer1_pts = np.array([[ 70.94741072, 117.37477536],
 # get reference and moving layer types
 im0 = data.camera()
 im1 = transform.rotate(im0[100:, 32:496], 60)
-labels0 = zarr.open('./src/affinder/_tests/label0.zarr', mode='r')
-labels1 = zarr.open('./src/affinder/_tests/label1.zarr', mode='r')
+labels0 = zarr.open('./src/affinder/_tests/labels0.zarr', mode='r')
+labels1 = zarr.open('./src/affinder/_tests/labels1.zarr', mode='r')
 
 def make_vector_border(layer_pts):
     vectors = np.zeros((layer_pts.shape[0], 2, layer_pts.shape[1]))
