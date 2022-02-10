@@ -6,11 +6,14 @@
 Welcome to affinder's documentation!
 ===============================================================
 
-Contents:
-
 .. toctree::
    :maxdepth: 2
 
+   usage
+
+
+.. include:: ../README.md
+   :parser: myst_parser.sphinx_
 
 
 Indices and tables

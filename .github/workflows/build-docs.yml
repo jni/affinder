@@ -31,7 +31,7 @@ jobs:
 
       - name: Build docs
         run: |
-          cd doc
+          cd docs
           make html
           cd ..
 
