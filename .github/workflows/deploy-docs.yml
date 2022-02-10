@@ -1,18 +1,18 @@
-name: Build docs
+name: Deploy docs
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
-      - docs
+      - main
+    tags:
+      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  
+
 jobs:
 
-  build-and-upload-artifact:
-    name: build
+  build-and-deploy:
+    name: deploy 
     runs-on: ubuntu-latest
 
     steps:
@@ -34,3 +34,9 @@ jobs:
           cd docs
           make html
           cd ..
+
+      - name: Deploy docs 🚀
+        uses: JamesIves/github-pages-deploy-action@4.1.5
+        with:
+          branch: gh-pages
+          folder: docs/_build/html
