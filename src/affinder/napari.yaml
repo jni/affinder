@@ -1,10 +1,10 @@
 name: affinder
-schema_version: 0.1.0
+display_name: affinder
 contributions:
   commands:
   - id: affinder.start_affinder
-    title: Create start_affinder
     python_name: affinder:start_affinder
+    title: Start affinder...
   widgets:
   - command: affinder.start_affinder
     display_name: Start affinder

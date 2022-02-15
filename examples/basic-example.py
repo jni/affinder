@@ -11,7 +11,7 @@ l1 = viewer.add_image(image1, colormap='magenta', blending='additive')
 l2 = viewer.add_points([[0, 0]])
 
 qtwidget, widget = viewer.window.add_plugin_dock_widget(
-        'affinder', 'start_affinder'
+        'affinder', 'Start affinder'
         )
 
 napari.run()
