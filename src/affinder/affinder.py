@@ -113,13 +113,13 @@ def start_affinder(
             if points_layers[i] is None:
                 layer, color = points_layers_to_add[i]
                 new_layer = viewer.add_points(
-                    ndim=layer.ndim,
-                    name=layer.name + '_pts',
-                    affine=layer.affine,
-                    face_color=[color],
-                    )
+                        ndim=layer.ndim,
+                        name=layer.name + '_pts',
+                        affine=layer.affine,
+                        face_color=[color],
+                        )
                 points_layers[i] = new_layer
-        pts_layer0 = points_layers[0]####
+        pts_layer0 = points_layers[0]
         pts_layer1 = points_layers[1]
 
         # make a callback for points added
