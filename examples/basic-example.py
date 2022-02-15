@@ -10,7 +10,7 @@ l0 = viewer.add_image(image0, colormap='green', blending='additive')
 l1 = viewer.add_image(image1, colormap='magenta', blending='additive')
 
 qtwidget, widget = viewer.window.add_plugin_dock_widget(
-        'affinder', 'Start affinder'
+        'affinder', 'start_affinder'
         )
 widget.reference.bind(l0)
 widget.moving.bind(l1)
