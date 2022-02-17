@@ -9,8 +9,10 @@ the requisite transformation matrix using Affine Transform, Euclidean Transform,
 or Similarity Transform, and performs this transformation on the
 moving image, aligning it to the reference image.
 
-https://user-images.githubusercontent.com/17995243/120086403-f1d0b300-c121-11eb-8000-a44a2ac54339.mp4
-
+<video width="640" height="480" controls>
+  <source src="https://user-images.githubusercontent.com/17995243/120086403-f1d0b300-c121-11eb-8000-a44a2ac54339.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
 
 # Who is This For?
 
