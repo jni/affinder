@@ -1,6 +1,6 @@
 """
 for ../.napari/DESCRIPTION.md
-find URLs ending in .mp4 and replace URL wraped in HTML video tag 
+find URLs ending in .mp4 and replace URL wrapped in HTML video tag 
 """
 
 replacement_url = '<video width="640" height="480" controls>\n\
