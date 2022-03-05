@@ -1,5 +1,5 @@
 from typing import Optional
-
+from napari.layers import Image, Labels, Shapes, Points, Vectors
 from enum import Enum
 import pathlib
 import toolz as tz
@@ -58,7 +58,8 @@ def next_layer_callback(
             # we just added enough points:
             # estimate transform, go back to layer0
             if n0 > ndim:
-                mat = calculate_transform(pts0, pts1, model_class=model_class)
+                mat = calculate_transform(pts0, pts1,
+                                          ndim, model_class=model_class)
                 moving_image_layer.affine = (
                         reference_image_layer.affine.affine_matrix @ mat.params
                         )
@@ -73,7 +74,6 @@ def next_layer_callback(
             viewer.layers.move(viewer.layers.index(reference_points_layer), -1)
             reset_view(viewer, reference_image_layer)
 
-
 # make a bindable function to shut things down
 @magicgui
 def close_affinder(layers, callback):
@@ -81,6 +81,46 @@ def close_affinder(layers, callback):
         layer.events.data.disconnect(callback)
         layer.mode = 'pan_zoom'
 
+def ndims(layer):
+    if isinstance(layer, Image) or isinstance(layer, Labels):
+        return layer.data.ndim
+    elif isinstance(layer, Shapes):
+        # list of s shapes, containing n * D of n points with D dimensions
+        return layer.data[0].shape[1]
+    elif isinstance(layer, Points):
+        # (n, D) array of n points with D dimensions
+        return layer.data.shape[1]
+    elif isinstance(layer, Vectors):
+        # (n, 2, D) of n vectors with start pt and projections in D dimensions
+        return layer.data.shape[-1]
+    else:
+        raise Warning(layer, "layer type is not currently supported - cannot "
+                             "find its ndims.")
+
+def add_zeros_at_end_of_last_axis(arr):
+    new_arr = np.zeros((arr.shape[0], arr.shape[1] + 1))
+    new_arr[:, :arr.shape[1]] = arr
+    return new_arr
+
+def expand_dims(layer):
+    if isinstance(layer, Image) or isinstance(layer, Labels):
+        return np.expand_dims(layer.data, axis=0)
+    elif isinstance(layer, Shapes):
+        # list of s shapes, containing n * D of n points with D dimensions
+        return [add_zeros_at_end_of_last_axis(l) for l in layer.data]
+    elif isinstance(layer, Points):
+        # (n, D) array of n points with D dimensions
+        return add_zeros_at_end_of_last_axis(layer.data)
+    elif isinstance(layer, Vectors):
+        # (n, 2, D) of n vectors with start pt and projections in D dimensions
+        n, b, D = layer.data.shape
+        new_arr = np.zeros((n, b, D+1))
+        new_arr[:,0,:] = add_zeros_at_end_of_last_axis(layer.data[:,0,:])
+        new_arr[:,1,:] = add_zeros_at_end_of_last_axis(layer.data[:,1,:])
+        return new_arr
+    else:
+        raise Warning(layer, "layer type is not currently supported - cannot "
+                             "expand its dimensions.")
 
 @magic_factory(
         call_button='Start',
@@ -108,6 +148,16 @@ def start_affinder(
         # Use C0 and C1 from matplotlib color cycle
         points_layers_to_add = [(reference, (0.122, 0.467, 0.706, 1.0)),
                                 (moving, (1.0, 0.498, 0.055, 1.0))]
+
+        # make no. dimensions the same (so skimage transforms work)
+        if ndims(reference) != ndims(moving):
+            size_ordered = lambda l1,l2: (l1,l2) if ndims(l1) < ndims(l2) else (l2,l1)
+            smaller_layer, larger_layer = size_ordered(reference, moving)
+            while ndims(smaller_layer) < ndims(larger_layer):
+                smaller_layer.data = expand_dims(smaller_layer)
+
+            # pad along each dimension so exact pixel dims are same
+
         # make points layer if it was not specified
         for i in range(len(points_layers)):
             if points_layers[i] is None:
@@ -152,7 +202,7 @@ def start_affinder(
         start_affinder._call_button.text = 'Start'
 
 
-def calculate_transform(src, dst, model_class=AffineTransform):
+def calculate_transform(src, dst, ndim, model_class=AffineTransform):
     """Calculate transformation matrix from matched coordinate pairs.
 
     Parameters
@@ -169,6 +219,7 @@ def calculate_transform(src, dst, model_class=AffineTransform):
     transform
         scikit-image Transformation object
     """
-    model = model_class()
+    # for 3D and higher dimensions, must specific matrix transform
+    model = model_class(dimensionality=ndim)
     model.estimate(dst, src)  # we want the inverse
     return model
