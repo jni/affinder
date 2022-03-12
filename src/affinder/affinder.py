@@ -1,4 +1,5 @@
 from typing import Optional
+import napari
 from napari.layers import Image, Labels, Shapes, Points, Vectors
 from enum import Enum
 import pathlib
@@ -102,25 +103,56 @@ def add_zeros_at_end_of_last_axis(arr):
     new_arr[:, :arr.shape[1]] = arr
     return new_arr
 
-def expand_dims(layer):
-    if isinstance(layer, Image) or isinstance(layer, Labels):
-        return np.expand_dims(layer.data, axis=0)
-    elif isinstance(layer, Shapes):
-        # list of s shapes, containing n * D of n points with D dimensions
-        return [add_zeros_at_end_of_last_axis(l) for l in layer.data]
-    elif isinstance(layer, Points):
-        # (n, D) array of n points with D dimensions
-        return add_zeros_at_end_of_last_axis(layer.data)
-    elif isinstance(layer, Vectors):
-        # (n, 2, D) of n vectors with start pt and projections in D dimensions
-        n, b, D = layer.data.shape
-        new_arr = np.zeros((n, b, D+1))
-        new_arr[:,0,:] = add_zeros_at_end_of_last_axis(layer.data[:,0,:])
-        new_arr[:,1,:] = add_zeros_at_end_of_last_axis(layer.data[:,1,:])
-        return new_arr
-    else:
-        raise Warning(layer, "layer type is not currently supported - cannot "
-                             "expand its dimensions.")
+def expand_dims(layer, target_ndims):
+
+    while ndims(layer) < target_ndims:
+        if isinstance(layer, Image) or isinstance(layer, Labels):
+            # add dimension to beginning of dimension list
+            layer.data = np.expand_dims(layer.data, axis=0)
+        elif isinstance(layer, Shapes):
+            # list of s shapes, containing n * D of n points with D dimensions
+            layer.data =  [add_zeros_at_end_of_last_axis(l) for l in layer.data]
+        elif isinstance(layer, Points):
+            # (n, D) array of n points with D dimensions
+            layer.data =  add_zeros_at_end_of_last_axis(layer.data)
+        elif isinstance(layer, Vectors):
+            # (n, 2, D) of n vectors with start pt and projections in D dimensions
+            n, b, D = layer.data.shape
+            new_arr = np.zeros((n, b, D+1))
+            new_arr[:,0,:] = add_zeros_at_end_of_last_axis(layer.data[:,0,:])
+            new_arr[:,1,:] = add_zeros_at_end_of_last_axis(layer.data[:,1,:])
+            layer.data =  new_arr
+        else:
+            raise Warning(layer, "layer type is not currently supported - cannot "
+                                 "expand its dimensions.")
+    return
+
+
+def extract_ndims(layer, target_ndims):
+    """
+    return the first target_ndims dimensions of the layer
+    """
+    while ndims(layer) > target_ndims:
+        if isinstance(layer, Image) or isinstance(layer, Labels):
+            # extract the first value from each of the discarded dimensions
+            layer.data = np.take(layer.data, 0, axis=0)
+        elif isinstance(layer, Shapes):
+            # list of s shapes, containing n * D array of n points with D dimensions
+            layer.data = [np.take(l, 0, axis=0) for l in layer.data]
+        elif isinstance(layer, Points):
+            # (n, D) array of n points with D dimensions
+            layer.data = np.take(layer.data, 0, axis=0)
+        elif isinstance(layer, Vectors):
+            # (n, 2, D) of n vectors with start pt and projections in D dimensions
+            n, b, D = layer.data.shape
+            new_arr = np.zeros((n, b, D-1))
+            new_arr[:,0,:] = np.take(layer.data[:,0,:], 0, axis=0)
+            new_arr[:,1,:] = np.take(layer.data[:,1,:], 0, axis=0)
+            layer.data = new_arr
+        else:
+            raise Warning(layer, "layer type is not currently supported - cannot "
+                                 "extract its dimensions.")
+    return
 
 @magic_factory(
         call_button='Start',
@@ -141,6 +173,13 @@ def start_affinder(
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
     if mode == 'Start':
+        # make no. dimensions the same (so skimage transforms work)
+        if ndims(reference) < ndims(moving):
+            extract_ndims(moving, ndims(reference))
+        elif ndims(reference) > ndims(moving):
+            expand_dims(moving, ndims(reference))
+        print("AFTER EQ", ndims(reference), "==?", ndims(moving))
+        
         # focus on the reference layer
         reset_view(viewer, reference)
         # set points layer for each image
@@ -148,15 +187,6 @@ def start_affinder(
         # Use C0 and C1 from matplotlib color cycle
         points_layers_to_add = [(reference, (0.122, 0.467, 0.706, 1.0)),
                                 (moving, (1.0, 0.498, 0.055, 1.0))]
-
-        # make no. dimensions the same (so skimage transforms work)
-        if ndims(reference) != ndims(moving):
-            size_ordered = lambda l1,l2: (l1,l2) if ndims(l1) < ndims(l2) else (l2,l1)
-            smaller_layer, larger_layer = size_ordered(reference, moving)
-            while ndims(smaller_layer) < ndims(larger_layer):
-                smaller_layer.data = expand_dims(smaller_layer)
-
-            # pad along each dimension so exact pixel dims are same
 
         # make points layer if it was not specified
         for i in range(len(points_layers)):

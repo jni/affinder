@@ -31,7 +31,6 @@ def make_vector_border(layer_pts):
                                      % layer_pts.shape[0], :] - layer_pts[n, :]
     return vectors
 
-
 vectors0 = make_vector_border(layer0_pts)
 vectors1 = make_vector_border(layer1_pts)
 
@@ -51,7 +50,11 @@ mov = [
         ]
 # TODO add tracks layer types, after multidim affine support added
 
+# multidimensional image tests
+#@pytest.mark.parametrize("reference,moving", [p for p in product(ref, mov)])
 
+
+# 2D onto 2D tests
 @pytest.mark.parametrize("reference,moving", [p for p in product(ref, mov)])
 def test_layer_types(make_napari_viewer, tmp_path, reference, moving):
 
