@@ -28,7 +28,6 @@ def reset_view(viewer: 'napari.Viewer', layer: 'napari.layers.Layer'):
     viewer.camera.center = center
     viewer.camera.zoom = np.min(viewer._canvas_size) / np.max(size)
 
-
 @tz.curry
 def next_layer_callback(
         value,  # we ignore the arguments returned with the event -- we will
@@ -40,10 +39,14 @@ def next_layer_callback(
         moving_points_layer,
         model_class,
         output,
+        align_to_moving_dimensions,
         ):
     pts0, pts1 = reference_points_layer.data, moving_points_layer.data
     n0, n1 = len(pts0), len(pts1)
-    ndim = pts0.shape[1]
+    if align_to_moving_dimensions:
+        ndim = pts1.shape[0]
+    else: # align to reference layer dimensions
+        ndim = pts0.shape[1]
     if reference_points_layer in viewer.layers.selection:
         if n0 < ndim + 1:
             return
@@ -61,12 +64,9 @@ def next_layer_callback(
             if n0 > ndim:
                 mat = calculate_transform(pts0, pts1,
                                           ndim, model_class=model_class)
-                moving_image_layer.affine = (
-                        reference_image_layer.affine.affine_matrix @ mat.params
-                        )
-                moving_points_layer.affine = (
-                        reference_image_layer.affine.affine_matrix @ mat.params
-                        )
+                ref_mat = reference_image_layer.affine.affine_matrix
+                moving_image_layer.affine = (ref_mat @ mat.params)
+                moving_points_layer.affine = (ref_mat @ mat.params)
                 if output is not None:
                     np.savetxt(output, np.asarray(mat.params), delimiter=',')
             viewer.layers.selection.active = reference_points_layer
@@ -81,6 +81,12 @@ def close_affinder(layers, callback):
     for layer in layers:
         layer.events.data.disconnect(callback)
         layer.mode = 'pan_zoom'
+
+"""
+class DimensionsFrom(enum):
+    back = -1
+    front = 0
+"""
 
 def ndims(layer):
     if isinstance(layer, Image) or isinstance(layer, Labels):
@@ -98,12 +104,38 @@ def ndims(layer):
         raise Warning(layer, "layer type is not currently supported - cannot "
                              "find its ndims.")
 
+"""
+def ndims(layer_data, layer_type):
+    if isinstance(layer, Image) or isinstance(layer, Labels):
+        return layer_data.ndim
+    elif isinstance(layer, Shapes):
+        # list of s shapes, containing n * D of n points with D dimensions
+        return layer_data[0].shape[1]
+    elif isinstance(layer, Points):
+        # (n, D) array of n points with D dimensions
+        return layer_data.shape[1]
+    elif isinstance(layer, Vectors):
+        # (n, 2, D) of n vectors with start pt and projections in D dimensions
+        return layer_data.shape[-1]
+    else:
+        raise Warning(layer, "layer type is not currently supported - cannot "
+                             "find its ndims.")
+"""
+def add_zeros_at_start_of_last_axis(arr):
+    new_arr = np.zeros((arr.shape[0], arr.shape[1] + 1))
+    new_arr[:, 1:] = arr
+    return new_arr
+
+"""
 def add_zeros_at_end_of_last_axis(arr):
     new_arr = np.zeros((arr.shape[0], arr.shape[1] + 1))
     new_arr[:, :arr.shape[1]] = arr
     return new_arr
+"""
 
-def expand_dims(layer, target_ndims):
+# this will take a long time for vectors and points if lots of dimensions need
+# to be padded
+def expand_dims(layer, target_ndims, viewer):
 
     while ndims(layer) < target_ndims:
         if isinstance(layer, Image) or isinstance(layer, Labels):
@@ -111,24 +143,43 @@ def expand_dims(layer, target_ndims):
             layer.data = np.expand_dims(layer.data, axis=0)
         elif isinstance(layer, Shapes):
             # list of s shapes, containing n * D of n points with D dimensions
-            layer.data =  [add_zeros_at_end_of_last_axis(l) for l in layer.data]
+            layer.data =  [add_zeros_at_start_of_last_axis(l) for l in layer.data]
         elif isinstance(layer, Points):
             # (n, D) array of n points with D dimensions
-            layer.data =  add_zeros_at_end_of_last_axis(layer.data)
+            print("before expand_dims ndim", layer.data.ndim)
+            #layer.data =  add_zeros_at_start_of_last_axis(layer.data)
+            new_arr = add_zeros_at_start_of_last_axis(layer.data)
+            new_layer = napari.layers.Points(new_arr,  name=layer.name,
+                                             properties=layer.properties)
+            viewer.layers.remove(layer.name)
+            viewer.add_layer(new_layer)
+            layer = new_layer
+            print("within expand_dims ndim", layer.data.ndim)
+
         elif isinstance(layer, Vectors):
             # (n, 2, D) of n vectors with start pt and projections in D dimensions
             n, b, D = layer.data.shape
             new_arr = np.zeros((n, b, D+1))
-            new_arr[:,0,:] = add_zeros_at_end_of_last_axis(layer.data[:,0,:])
-            new_arr[:,1,:] = add_zeros_at_end_of_last_axis(layer.data[:,1,:])
-            layer.data =  new_arr
+            new_arr[:,0,:] = add_zeros_at_start_of_last_axis(layer.data[:,0,:])
+            new_arr[:,1,:] = add_zeros_at_start_of_last_axis(layer.data[:,1,:])
+            print("before expand_dims ndim", layer.data.ndim)
+            #layer.data = new_arr
+            new_layer =  napari.layers.Vectors(new_arr,  name=layer.name,
+                                               properties=layer.properties)
+            viewer.layers.remove(layer.name)
+            viewer.add_layer(new_layer)
+            layer = new_layer
+            print("within expand_dims ndim", layer.data.ndim)
         else:
             raise Warning(layer, "layer type is not currently supported - cannot "
                                  "expand its dimensions.")
-    return
+    print("layer.extent.world.shape", layer.extent.world.shape)
+    if isinstance(layer, Vectors) or isinstance(layer, Points):
+        print("after expand_dims ndim", layer.data.ndim)
+    return layer
 
 
-def extract_ndims(layer, target_ndims):
+def extract_ndims(layer, target_ndims, viewer):
     """
     return the first target_ndims dimensions of the layer
     """
@@ -141,18 +192,38 @@ def extract_ndims(layer, target_ndims):
             layer.data = [np.take(l, 0, axis=0) for l in layer.data]
         elif isinstance(layer, Points):
             # (n, D) array of n points with D dimensions
-            layer.data = np.take(layer.data, 0, axis=0)
+            new_arr = np.take(layer.data, 0, axis=0)
+            # napari doesn't let you change D dimensions of points so have to
+            # create duplicate layer and delete the existing one...
+            new_layer = napari.layers.Points(new_arr, name=layer.name,
+                                             properties=layer.properties)
+            viewer.layers.remove(layer.name)
+            viewer.add_layer(new_layer)
+            layer = new_layer
+
         elif isinstance(layer, Vectors):
             # (n, 2, D) of n vectors with start pt and projections in D dimensions
             n, b, D = layer.data.shape
             new_arr = np.zeros((n, b, D-1))
             new_arr[:,0,:] = np.take(layer.data[:,0,:], 0, axis=0)
             new_arr[:,1,:] = np.take(layer.data[:,1,:], 0, axis=0)
-            layer.data = new_arr
+            new_layer = napari.layers.Vectors(new_arr, name=layer.name,
+                                              properties=layer.properties)
+            viewer.layers.remove(layer.name)
+            viewer.add_layer(new_layer)
+            layer = new_layer
         else:
             raise Warning(layer, "layer type is not currently supported - cannot "
                                  "extract its dimensions.")
-    return
+    return layer
+
+def expand_or_extract_ndims(layer, target_ndims, viewer):
+    new_layer = None
+    if ndims(layer) < target_ndims:
+        new_layer = expand_dims(layer, target_ndims, viewer)
+    elif ndims(layer) > target_ndims:
+        new_layer = extract_ndims(layer, target_ndims, viewer)
+    return new_layer
 
 @magic_factory(
         call_button='Start',
@@ -168,18 +239,25 @@ def start_affinder(
         moving: 'napari.layers.Layer',
         moving_points: Optional['napari.layers.Points'] = None,
         model: AffineTransformChoices,
-        output: Optional[pathlib.Path] = None,
+        align_to_moving_dimensions: bool = False,
+        output: Optional[pathlib.Path] = None
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
     if mode == 'Start':
-        # make no. dimensions the same (so skimage transforms work)
-        if ndims(reference) < ndims(moving):
-            extract_ndims(moving, ndims(reference))
-        elif ndims(reference) > ndims(moving):
-            expand_dims(moving, ndims(reference))
-        print("AFTER EQ", ndims(reference), "==?", ndims(moving))
-        
+
+        if model == AffineTransformChoices.affine:
+            if ndims(moving) != ndims(reference):
+                raise ValueError("Choose different model: Affine transform "
+                                 "cannot be used if layers have different "
+                                 "dimensions. Please choose a different model "
+                                 "type")
+
+        if ndims(moving) != ndims(reference) and (not
+        align_to_moving_dimensions):
+            # make no. dimensions the same (so skimage transforms work)
+            moving = expand_or_extract_ndims(moving, ndims(reference), viewer)
+
         # focus on the reference layer
         reset_view(viewer, reference)
         # set points layer for each image
@@ -211,6 +289,7 @@ def start_affinder(
                 moving_points_layer=pts_layer1,
                 model_class=model.value,
                 output=output,
+                align_to_moving_dimensions=align_to_moving_dimensions
                 )
         pts_layer0.events.data.connect(callback)
         pts_layer1.events.data.connect(callback)
@@ -249,7 +328,22 @@ def calculate_transform(src, dst, ndim, model_class=AffineTransform):
     transform
         scikit-image Transformation object
     """
-    # for 3D and higher dimensions, must specific matrix transform
+    # convert points to correct dimension (from right bottom corner)
+    # pos_val = lambda x: x if x > 0 else 0
+    """
+    def convert_pts_ndim(pts_arr, target_ndim):
+        n_pts, current_ndim = pts_arr.shape
+        if current_ndim < target_ndim:
+            new = np.zeros((n_pts, target_ndim))
+            i = target_ndim - current_ndim
+            new[:, i:] = pts_arr
+        else:
+            i = current_ndim - target_ndim
+            new = pts_arr[:, i:]
+        return new
+    """
+    # do transform
     model = model_class(dimensionality=ndim)
-    model.estimate(dst, src)  # we want the inverse
+    model.estimate(dst, src)  # we want
+    # the inverse
     return model
