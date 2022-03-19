@@ -22,7 +22,10 @@ class AffineTransformChoices(Enum):
 def reset_view(viewer: 'napari.Viewer', layer: 'napari.layers.Layer'):
     if viewer.dims.ndisplay != 2:
         return
-    extent = layer.extent.world[:, viewer.dims.displayed]
+    if len(viewer.dims.displayed) == layer.extent.world.shape[1]:
+        extent = layer.extent.world
+    else:
+        extent = layer.extent.world[:, viewer.dims.displayed]
     size = extent[1] - extent[0]
     center = extent[0] + size/2
     viewer.camera.center = center
@@ -38,15 +41,11 @@ def next_layer_callback(
         moving_image_layer,
         moving_points_layer,
         model_class,
-        output,
-        align_to_moving_dimensions,
+        output
         ):
     pts0, pts1 = reference_points_layer.data, moving_points_layer.data
     n0, n1 = len(pts0), len(pts1)
-    if align_to_moving_dimensions:
-        ndim = pts1.shape[0]
-    else: # align to reference layer dimensions
-        ndim = pts0.shape[1]
+    ndim = pts0.shape[1]
     if reference_points_layer in viewer.layers.selection:
         if n0 < ndim + 1:
             return
@@ -82,12 +81,6 @@ def close_affinder(layers, callback):
         layer.events.data.disconnect(callback)
         layer.mode = 'pan_zoom'
 
-"""
-class DimensionsFrom(enum):
-    back = -1
-    front = 0
-"""
-
 def ndims(layer):
     if isinstance(layer, Image) or isinstance(layer, Labels):
         return layer.data.ndim
@@ -104,23 +97,6 @@ def ndims(layer):
         raise Warning(layer, "layer type is not currently supported - cannot "
                              "find its ndims.")
 
-"""
-def ndims(layer_data, layer_type):
-    if isinstance(layer, Image) or isinstance(layer, Labels):
-        return layer_data.ndim
-    elif isinstance(layer, Shapes):
-        # list of s shapes, containing n * D of n points with D dimensions
-        return layer_data[0].shape[1]
-    elif isinstance(layer, Points):
-        # (n, D) array of n points with D dimensions
-        return layer_data.shape[1]
-    elif isinstance(layer, Vectors):
-        # (n, 2, D) of n vectors with start pt and projections in D dimensions
-        return layer_data.shape[-1]
-    else:
-        raise Warning(layer, "layer type is not currently supported - cannot "
-                             "find its ndims.")
-"""
 def add_zeros_at_start_of_last_axis(arr):
     new_arr = np.zeros((arr.shape[0], arr.shape[1] + 1))
     new_arr[:, 1:] = arr
@@ -239,7 +215,6 @@ def start_affinder(
         moving: 'napari.layers.Layer',
         moving_points: Optional['napari.layers.Points'] = None,
         model: AffineTransformChoices,
-        align_to_moving_dimensions: bool = False,
         output: Optional[pathlib.Path] = None
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
@@ -253,8 +228,7 @@ def start_affinder(
                                  "dimensions. Please choose a different model "
                                  "type")
 
-        if ndims(moving) != ndims(reference) and (not
-        align_to_moving_dimensions):
+        if ndims(moving) != ndims(reference):
             # make no. dimensions the same (so skimage transforms work)
             moving = expand_or_extract_ndims(moving, ndims(reference), viewer)
 
@@ -288,8 +262,7 @@ def start_affinder(
                 moving_image_layer=moving,
                 moving_points_layer=pts_layer1,
                 model_class=model.value,
-                output=output,
-                align_to_moving_dimensions=align_to_moving_dimensions
+                output=output
                 )
         pts_layer0.events.data.connect(callback)
         pts_layer1.events.data.connect(callback)
