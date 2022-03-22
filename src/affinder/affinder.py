@@ -122,7 +122,6 @@ def expand_dims(layer, target_ndims, viewer):
             layer.data =  [add_zeros_at_start_of_last_axis(l) for l in layer.data]
         elif isinstance(layer, Points):
             # (n, D) array of n points with D dimensions
-            print("before expand_dims ndim", layer.data.ndim)
             #layer.data =  add_zeros_at_start_of_last_axis(layer.data)
             new_arr = add_zeros_at_start_of_last_axis(layer.data)
             new_layer = napari.layers.Points(new_arr,  name=layer.name,
@@ -130,7 +129,6 @@ def expand_dims(layer, target_ndims, viewer):
             viewer.layers.remove(layer.name)
             viewer.add_layer(new_layer)
             layer = new_layer
-            print("within expand_dims ndim", layer.data.ndim)
 
         elif isinstance(layer, Vectors):
             # (n, 2, D) of n vectors with start pt and projections in D dimensions
@@ -138,20 +136,16 @@ def expand_dims(layer, target_ndims, viewer):
             new_arr = np.zeros((n, b, D+1))
             new_arr[:,0,:] = add_zeros_at_start_of_last_axis(layer.data[:,0,:])
             new_arr[:,1,:] = add_zeros_at_start_of_last_axis(layer.data[:,1,:])
-            print("before expand_dims ndim", layer.data.ndim)
             #layer.data = new_arr
             new_layer =  napari.layers.Vectors(new_arr,  name=layer.name,
                                                properties=layer.properties)
             viewer.layers.remove(layer.name)
             viewer.add_layer(new_layer)
             layer = new_layer
-            print("within expand_dims ndim", layer.data.ndim)
+
         else:
             raise Warning(layer, "layer type is not currently supported - cannot "
                                  "expand its dimensions.")
-    print("layer.extent.world.shape", layer.extent.world.shape)
-    if isinstance(layer, Vectors) or isinstance(layer, Points):
-        print("after expand_dims ndim", layer.data.ndim)
     return layer
 
 
