@@ -4,12 +4,14 @@ name: napari hub Preview Page # we use this name to find your preview page artif
 
 on:
   pull_request:
-    branches:
-      - '**'
+    types: [labeled]
+  workflow_dispatch:
 
 jobs:
   preview-page:
     name: Preview Page Deploy
+
+    if: ${{ github.event.label.name == 'hub-preview' && github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
 
     steps:
