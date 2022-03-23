@@ -31,6 +31,7 @@ jobs:
 
       - name: Build docs
         run: |
+          python docs/replace_description_text.py
           cd docs
           make html
           cd ..
