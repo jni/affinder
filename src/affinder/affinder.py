@@ -111,7 +111,7 @@ def add_zeros_at_end_of_last_axis(arr):
 
 # this will take a long time for vectors and points if lots of dimensions need
 # to be padded
-def expand_dims(layer, target_ndims, viewer):
+def expand_dims(layer, target_ndims, viewer, extract_index=0):
 
     while ndims(layer) < target_ndims:
         if isinstance(layer, Image) or isinstance(layer, Labels):
@@ -149,42 +149,49 @@ def expand_dims(layer, target_ndims, viewer):
     return layer
 
 
-def extract_ndims(layer, target_ndims, viewer):
+def extract_ndims(layer, target_ndims, viewer, extract_index=-1):
     """
-    return the first target_ndims dimensions of the layer
+    return the last target_ndims dimensions of the layer
     """
-    while ndims(layer) > target_ndims:
-        if isinstance(layer, Image) or isinstance(layer, Labels):
-            # extract the first value from each of the discarded dimensions
-            layer.data = np.take(layer.data, 0, axis=0)
-        elif isinstance(layer, Shapes):
-            # list of s shapes, containing n * D array of n points with D dimensions
-            layer.data = [np.take(l, 0, axis=0) for l in layer.data]
-        elif isinstance(layer, Points):
-            # (n, D) array of n points with D dimensions
-            new_arr = np.take(layer.data, 0, axis=0)
-            # napari doesn't let you change D dimensions of points so have to
-            # create duplicate layer and delete the existing one...
-            new_layer = napari.layers.Points(new_arr, name=layer.name,
-                                             properties=layer.properties)
-            viewer.layers.remove(layer.name)
-            viewer.add_layer(new_layer)
-            layer = new_layer
+    # get index of dimensions to extract from
+    if extract_index == -1:
+        extract_dims_i = list(range(ndims(layer) - target_ndims, ndims(layer)))
+    elif extract_index == 0:
+        extract_dims_i = list(0, target_ndims)
 
-        elif isinstance(layer, Vectors):
-            # (n, 2, D) of n vectors with start pt and projections in D dimensions
+    if isinstance(layer, Image) or isinstance(layer, Labels):
+        # extract the first value from each of the discarded dimensions
+        while ndims(layer) > target_ndims:
+            layer.data = np.take(layer.data, extract_index, axis=0)
+    elif isinstance(layer, Shapes):
+        # list of s shapes, containing n * D array of n points with D dimensions
+        layer.data = [np.take(p, extract_dims_i, axis=0) for s in
+                        layer.data for p in s]
+    elif isinstance(layer, Points):
+        # (n, D) array of n points with D dimensions
+        new_arr = np.take(layer.data, extract_dims_i, axis=1)
+        # napari doesn't let you change D dimensions of points so have to
+        # create duplicate layer and delete the existing one...
+        new_layer = napari.layers.Points(new_arr, name=layer.name,
+                                             properties=layer.properties)
+        viewer.layers.remove(layer.name)
+        viewer.add_layer(new_layer)
+        layer = new_layer
+    elif isinstance(layer, Vectors):
+        # (n, 2, D) of n vectors with start pt and projections in D dimensions
+        while ndims(layer) > target_ndims:
             n, b, D = layer.data.shape
             new_arr = np.zeros((n, b, D-1))
-            new_arr[:,0,:] = np.take(layer.data[:,0,:], 0, axis=0)
-            new_arr[:,1,:] = np.take(layer.data[:,1,:], 0, axis=0)
+            new_arr[:,0,:] = np.take(layer.data[:,0,:], extract_dims_i, axis=1)
+            new_arr[:,1,:] = np.take(layer.data[:,1,:], extract_dims_i, axis=1)
             new_layer = napari.layers.Vectors(new_arr, name=layer.name,
-                                              properties=layer.properties)
+                                                  properties=layer.properties)
             viewer.layers.remove(layer.name)
             viewer.add_layer(new_layer)
             layer = new_layer
-        else:
-            raise Warning(layer, "layer type is not currently supported - cannot "
-                                 "extract its dimensions.")
+    else:
+        raise Warning(layer, "layer type is not currently supported - cannot "
+                             "extract its dimensions.")
     return layer
 
 def expand_or_extract_ndims(layer, target_ndims, viewer):
