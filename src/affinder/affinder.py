@@ -6,6 +6,7 @@ import pathlib
 import toolz as tz
 from magicgui import magicgui, magic_factory
 import numpy as np
+from copy import deepcopy
 from skimage.transform import (
         AffineTransform,
         EuclideanTransform,
@@ -29,7 +30,7 @@ def reset_view(viewer: 'napari.Viewer', layer: 'napari.layers.Layer'):
     size = extent[1] - extent[0]
     center = extent[0] + size/2
     viewer.camera.center = center
-    viewer.camera.zoom = np.min(viewer._canvas_size) / np.max(size)
+    viewer.camera.zoom = np.min(viewer._canvas_size) / np.max(size)##deprecation
 
 @tz.curry
 def next_layer_callback(
@@ -216,7 +217,8 @@ def start_affinder(
         moving: 'napari.layers.Layer',
         moving_points: Optional['napari.layers.Points'] = None,
         model: AffineTransformChoices,
-        output: Optional[pathlib.Path] = None
+        output: Optional[pathlib.Path] = None,
+        keep_original_moving_layer = False,
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
@@ -232,6 +234,11 @@ def start_affinder(
         if ndims(moving) != ndims(reference):
             # make no. dimensions the same (so skimage transforms work)
             moving = expand_or_extract_ndims(moving, ndims(reference), viewer)
+            # make copy of moving layer if selected
+            if keep_original_moving_layer:
+                og_layer = deepcopy(moving)
+                og_layer.name = og_layer.name+" original"
+                viewer.add_layer(og_layer)
 
         # focus on the reference layer
         reset_view(viewer, reference)

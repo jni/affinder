@@ -8,22 +8,6 @@ import napari
 import pytest
 from copy import copy
 
-# TO DO
-
-#[/] 2D_3D tests
-
-#[] 3D_3D tests
-
-# [] do affinder on copy of moving layer if dims are being altered
-
-#[] add optional slice at parameter for 2D_3D slicing (extracting dims)
-# maybe a list in case they are extracting heaps of dims (e.g. 2D_5D)
-# need default checking for list to not screw up indexing - then raise error
-
-#[] check on napari gui that they work
-# (Image, Image), (Image, Points), (Image, Vectors)
-
-
 nuclei3D_pts = np.array([[ 30.        ,  68.47649186,  67.08770344],
                        [ 30.        ,  85.14195298,  51.81103074],
                        [ 30.        , 104.58499096,  43.94122966],
@@ -38,6 +22,7 @@ nuclei2D_transformed_3Dpts = np.array([[0, 154.44736842,  18.95499262],
                                        [0, 176.10600098,  24.49557304],
                                        [0, 195.2461879 ,  35.57673389],
                                        [0, 160.49163797, 116.67068372]])
+
 nuclei3D_2Dpts = nuclei3D_pts[:,1:]
 nuclei2D_2Dpts = nuclei2D_3Dpts[:,1:]
 nuclei2D_transformed_2Dpts = nuclei2D_transformed_3Dpts[:,1:]
@@ -46,7 +31,6 @@ nuclei2D_transformed_2Dpts = nuclei2D_transformed_3Dpts[:,1:]
 nuclei2D = data.cells3d()[30,1,:,:] # (256, 256)
 nuclei2D_transformed = transform.rotate(nuclei2D[10:, 32:496], 60) # (246, 224)
 nuclei3D = data.cells3d()[:,1,:,:] # (60, 256, 256)
-
 
 nuclei2D_labels = zarr.open(
     './src/affinder/_tests/nuclei2D_labels.zarr',
@@ -206,46 +190,3 @@ def test_2D_3D(make_napari_viewer, tmp_path, reference, moving):
                                 [ 0.000000e+00,  0.000000e+00,  1.000000e+00]])
 
     np.testing.assert_allclose(actual_affine, expected_affine, rtol=1e-06)
-
-
-
-"""
-
-# 3D as reference, 3D as moving
-@pytest.mark.parametrize("reference,moving", [p for p in product(nuc3D_t,
-                                                                 nuc3D)])
-def test_3D_3D(make_napari_viewer, tmp_path, reference, moving):
-
-    viewer = make_napari_viewer()
-
-    l0 = viewer.add_layer(reference)
-    viewer.layers[-1].name = "layer0"
-    viewer.layers[-1].colormap = "green"
-
-    l1 = viewer.add_layer(moving)
-    viewer.layers[-1].name = "layer1"
-    viewer.layers[-1].colormap = "magenta"
-
-    my_widget_factory = start_affinder()
-    my_widget_factory(
-            viewer=viewer,
-            reference=l0,
-            moving=l1,
-            model=AffineTransformChoices.Euclidean,
-            output=tmp_path / 'my_affine.txt'
-            )
-
-    viewer.layers['layer0_pts'].data = nuclei2D_2Dpts
-    viewer.layers['layer1_pts'].data = nuclei3D_2Dpts
-
-    actual_affine = np.asarray(viewer.layers['layer1'].affine)
-    # start_affinder currently makes a clone of moving layer when it's of 
-    # type Points of Vectors and not same dimensions as reference layer - so l1 
-    # is a redundant layer that is no longer used as the real moving layer -
-    # this is why we use viewer.layers['layer1] instead of l1
-    expected_affine = np.array([[ 1.000000e+00,  2.890235e-17,  0.000000e+00],
-                                [-7.902889e-18,  1.000000e+00,  1.421085e-14],
-                                [ 0.000000e+00,  0.000000e+00,  1.000000e+00]])
-
-    np.testing.assert_allclose(actual_affine, expected_affine, rtol=1e-06)
-"""
