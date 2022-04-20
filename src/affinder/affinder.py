@@ -264,12 +264,12 @@ def start_affinder(
     if mode == 'Start':
 
         if model == AffineTransformChoices.affine:
-            if ndims(moving) != ndims(reference):
+            if (ndims(moving) != 2) or (ndims(reference) != 2):
                 raise ValueError(
                         "Choose different model: Affine transform "
-                        "cannot be used if layers have different "
-                        "dimensions. Please choose a different model "
-                        "type"
+                        "cannot be used if layers are not both 2D. "
+                        "Please choose a different model "
+                        "type (not \"affine\")"
                         )
 
         if ndims(moving) != ndims(reference):
