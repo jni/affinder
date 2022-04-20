@@ -119,6 +119,9 @@ def add_zeros_at_end_of_last_axis(arr):
     return new_arr
 """
 
+def add_zeros_at_axis(arr, axis):
+    ...
+
 
 # this will take a long time for vectors and points if lots of dimensions need
 # to be padded
