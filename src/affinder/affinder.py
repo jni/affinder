@@ -105,23 +105,24 @@ def ndims(layer):
                 "find its ndims."
                 )
 
-
 def add_zeros_at_start_of_last_axis(arr):
-    new_arr = np.zeros((arr.shape[0], arr.shape[1] + 1))
-    new_arr[:, 1:] = arr
+    upsize_last_axis = lambda size: size[:-1]+(size[-1]+1,)
+    new_arr = np.zeros(upsize_last_axis(arr.shape))
+    new_arr[..., 1:] = arr
     return new_arr
 
+""" 
+#maybe add option for user to specific which axis to pad (and whether to 
+#pad from front or back or somewhere in the middle)
 
-"""
 def add_zeros_at_end_of_last_axis(arr):
     new_arr = np.zeros((arr.shape[0], arr.shape[1] + 1))
     new_arr[:, :arr.shape[1]] = arr
     return new_arr
-"""
-
+    
 def add_zeros_at_axis(arr, axis):
     ...
-
+"""
 
 # this will take a long time for vectors and points if lots of dimensions need
 # to be padded
