@@ -105,11 +105,13 @@ def ndims(layer):
                 "find its ndims."
                 )
 
+
 def add_zeros_at_start_of_last_axis(arr):
-    upsize_last_axis = lambda size: size[:-1]+(size[-1]+1,)
+    upsize_last_axis = lambda size: size[:-1] + (size[-1] + 1,)
     new_arr = np.zeros(upsize_last_axis(arr.shape))
     new_arr[..., 1:] = arr
     return new_arr
+
 
 """ 
 #maybe add option for user to specific which axis to pad (and whether to 
@@ -123,6 +125,7 @@ def add_zeros_at_end_of_last_axis(arr):
 def add_zeros_at_axis(arr, axis):
     ...
 """
+
 
 # this will take a long time for vectors and points if lots of dimensions need
 # to be padded
@@ -349,18 +352,7 @@ def calculate_transform(src, dst, ndim, model_class=AffineTransform):
     """
     # convert points to correct dimension (from right bottom corner)
     # pos_val = lambda x: x if x > 0 else 0
-    """
-    def convert_pts_ndim(pts_arr, target_ndim):
-        n_pts, current_ndim = pts_arr.shape
-        if current_ndim < target_ndim:
-            new = np.zeros((n_pts, target_ndim))
-            i = target_ndim - current_ndim
-            new[:, i:] = pts_arr
-        else:
-            i = current_ndim - target_ndim
-            new = pts_arr[:, i:]
-        return new
-    """
+
     # do transform
     model = model_class(dimensionality=ndim)
     model.estimate(dst, src)  # we want
