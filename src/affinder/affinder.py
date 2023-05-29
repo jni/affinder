@@ -100,7 +100,7 @@ def _update_unique_choices(widget, choice_name):
     index = choice_names.index(choice_name)
     value = widget.choices[index]
     if widget.value is value:
-        next_index = (index + 1) % len(choices)
+        next_index = (index+1) % len(choices)
         widget.changed.block()
         # should block() be a context manager?
         widget.value = widget.choices[next_index]
