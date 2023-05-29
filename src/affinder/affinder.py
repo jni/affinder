@@ -82,7 +82,44 @@ def close_affinder(layers, callback):
         layer.mode = 'pan_zoom'
 
 
+def _update_unique_choices(widget, choice_name):
+    """Update the selected choice in a ComboBox widget to be unique.
+
+    When `choice_name` is selected by another widget, and the choice in
+    `widget` needs to be different, this callback can be called to update the
+    choice in `widget`.
+    """
+    if not isinstance(choice_name, str):
+        # in some circumstances, widget.changed.connect passes the choice
+        # name to the callback, and in other cases it's the actual choice
+        # value. Here we coerce it to always be the name but that's an
+        # arbitrary choice.
+        choice_name = choice_name.name
+    choices = widget.choices
+    choice_names = [value.name for value in choices]
+    index = choice_names.index(choice_name)
+    value = widget.choices[index]
+    if widget.value is value:
+        next_index = (index + 1) % len(choices)
+        widget.changed.block()
+        # should block() be a context manager?
+        widget.value = widget.choices[next_index]
+        widget.changed.unblock()
+
+
+def _on_affinder_main_init(widget):
+    """Make sure that the reference and moving image are not the same."""
+    widget.reference.changed.connect(
+            lambda v: _update_unique_choices(widget.moving, v)
+            )
+    widget.moving.changed.connect(
+            lambda v: _update_unique_choices(widget.reference, v)
+            )
+    _update_unique_choices(widget.moving, widget.reference.current_choice)
+
+
 @magic_factory(
+        widget_init=_on_affinder_main_init,
         call_button='Start',
         layout='vertical',
         output={'mode': 'w'},
