@@ -5,10 +5,10 @@
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="Welcome to affinder’s documentation!" href="index.html" />
 
-    <meta name="generator" content="sphinx-4.5.0, furo 2022.04.07"/>
+    <meta name="generator" content="sphinx-4.5.0, furo 2022.09.29"/>
         <title>Using affinder - affinder documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=68f4518137b9aefe99b631505a2064c3c42c9852" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
     
     
@@ -174,7 +174,9 @@
           </svg>
           <span>Back to top</span>
         </a>
-        <div class="content-icon-container"><div class="theme-toggle-container theme-toggle-content">
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
               <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
@@ -199,8 +201,8 @@ on an image, and a second image you wish to transform. It computes
 the requisite transformation matrix using Affine Transform, Euclidean Transform,
 or Similarity Transform, and performs this transformation on the
 moving image, aligning it to the reference image.</p>
-<video controls="" height="480" width="640">
-<source src="https://user-images.githubusercontent.com/17995243/120086403-f1d0b300-c121-11eb-8000-a44a2ac54339.mp4" type="video/mp4"/>
+<video width="640" height="480" controls>
+    <source src="https://user-images.githubusercontent.com/17995243/120086403-f1d0b300-c121-11eb-8000-a44a2ac54339.mp4" type="video/mp4">
 Your browser does not support the video tag.
 </video>
 </section>
@@ -217,11 +219,11 @@ they perform in the background based on the reference points selected.</p>
 <p>You will need a combination of two or more 2D image and/or labels layers
 loaded into napari. Once you have installed affinder, you can find it in
 the dock widgets menu.</p>
-<p><img alt="Affinder widget in the Plugins-&gt;Add Dock Widget menu" src="https://i.imgur.com/w7MCXQy.png"/></p>
+<p><img alt="Affinder widget in the Plugins-&gt;Add Dock Widget menu" src="https://i.imgur.com/w7MCXQy.png" /></p>
 <p>The first two dropdown boxes will be populated with the layers currently
 loaded into napari. Select a layer to use as reference, and another to
 transform.</p>
-<p><img alt="Dropdowns allow you to select the reference and moving layers" src="https://i.imgur.com/Tdbm1sX.png"/></p>
+<p><img alt="Dropdowns allow you to select the reference and moving layers" src="https://i.imgur.com/Tdbm1sX.png" /></p>
 <p>Next, you can select the transformation model to use (affine is selected by default
 and is the least rigid transformation of those available). See <span class="xref myst">below</span> for a
 description of the different models.</p>
@@ -230,13 +232,13 @@ resulting transformation matrix.</p>
 <p>When you click Start, affinder will add two points layers to napari.
 The plugin will also bring your reference image in focus, and its associated points
 layer. You can then start adding reference points by clicking on your image.</p>
-<p><img alt="Adding reference points to layer" src="https://i.imgur.com/WPzNtyy.png"/></p>
+<p><img alt="Adding reference points to layer" src="https://i.imgur.com/WPzNtyy.png" /></p>
 <p>Once three points are added, affinder will switch focus to the moving image,
 and you should then proceed to select the corresponding three points.</p>
-<p><img alt="Adding corresponding points to newly focused layer" src="https://i.imgur.com/JVZCvmp.png"/></p>
+<p><img alt="Adding corresponding points to newly focused layer" src="https://i.imgur.com/JVZCvmp.png" /></p>
 <p>affinder will immediately transform the moving image to align the points you’ve
 selected when you add your third corresponding point to your moving image.</p>
-<p><img alt="The moving image is transformed once three points are added" src="https://i.imgur.com/NTne9fj.png"/></p>
+<p><img alt="The moving image is transformed once three points are added" src="https://i.imgur.com/NTne9fj.png" /></p>
 <p>From there, you can continue iteratively adding points until you
 are happy with the alignment. Affinder will switch focus between
 reference and moving image with each point.</p>
@@ -284,7 +286,7 @@ a particular format, or have a DOI you’d like used, you should provide that in
         <div class="related-pages">
           
           <a class="prev-page" href="index.html">
-              <svg><use href="#svg-arrow-right"></use></svg>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
@@ -320,7 +322,7 @@ a particular format, or have a DOI you’d like used, you should provide that in
       <div class="toc-sticky toc-scroll">
         <div class="toc-title-container">
           <span class="toc-title">
-            Contents
+            On this page
           </span>
         </div>
         <div class="toc-tree-container">
