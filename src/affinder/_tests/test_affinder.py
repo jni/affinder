@@ -206,3 +206,18 @@ def test_2D_3D(make_napari_viewer, tmp_path, reference, moving):
     np.testing.assert_allclose(
             actual_affine, expected_affine, rtol=10, atol=1e-10
             )
+
+
+def test_ensure_different_layers(make_napari_viewer):
+    viewer = make_napari_viewer()
+    image0 = np.random.random((50, 50))
+    image1 = np.random.random((30, 30))
+    image2 = np.random.random((40, 40))
+    for image in [image0, image1, image2]:
+        viewer.add_image(image)
+    qtwidget, widget = viewer.window.add_plugin_dock_widget(
+            'affinder', 'Start affinder'
+            )
+    assert widget.reference.value != widget.moving.value
+    widget.reference.value = widget.moving.value
+    assert widget.reference.value != widget.moving.value
