@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional
 
 from enum import Enum
@@ -25,7 +26,10 @@ def reset_view(viewer: 'napari.Viewer', layer: 'napari.layers.Layer'):
     size = extent[1] - extent[0]
     center = extent[0] + size/2
     viewer.camera.center = center
-    viewer.camera.zoom = np.min(viewer._canvas_size) / np.max(size)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        canvas_size = viewer._canvas_size
+    viewer.camera.zoom = np.min(canvas_size) / np.max(size)
 
 
 @tz.curry
