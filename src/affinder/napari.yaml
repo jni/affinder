@@ -1,5 +1,7 @@
 name: affinder
 display_name: affinder
+categories:
+  - Transformations
 contributions:
   commands:
   - id: affinder.start_affinder
