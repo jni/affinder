@@ -7,6 +7,11 @@ contributions:
   - id: affinder.start_affinder
     python_name: affinder:start_affinder
     title: Start affinder...
+  - id: affinder.copy_affine
+    python_name: affinder:copy_affine
+    title: Copy affine
   widgets:
   - command: affinder.start_affinder
     display_name: Start affinder
+  - command: affinder.copy_affine
+    display_name: Copy affine
