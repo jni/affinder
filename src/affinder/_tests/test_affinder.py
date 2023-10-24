@@ -1,4 +1,4 @@
-from affinder import start_affinder
+from affinder import start_affinder, copy_affine
 from affinder.affinder import AffineTransformChoices
 from skimage import data, transform
 import numpy as np
@@ -6,6 +6,7 @@ from itertools import product
 import zarr
 import napari
 import pytest
+
 
 layer0_pts = np.array([[140.38371886,
                         322.5390704], [181.91866481, 319.65803368],
@@ -98,3 +99,13 @@ def test_ensure_different_layers(make_napari_viewer):
     assert widget.reference.value != widget.moving.value
     widget.reference.value = widget.moving.value
     assert widget.reference.value != widget.moving.value
+
+
+def test_copy_affine():
+    layer0 = napari.layers.Image(np.random.random((5, 5)))
+    layer1 = napari.layers.Image(np.random.random((5, 5)))
+    layer0.affine = np.array([[0.9, 0.1, 5], [0.4, 0.2, 9], [0, 0, 1]])
+
+    widget = copy_affine()
+    widget(layer0, layer1)
+    np.testing.assert_allclose(layer0.affine, layer1.affine)
