@@ -56,19 +56,20 @@ def apply_affine(
 
 
 def tform_matrix_rc2xy(affine_matrix: np.ndarray):
-    """
-    Convert an affine transformation matrix from the (unusual) convention where rows represent x-coordinates and columns
-    represent y-coordinates to the more standard convention where rows represent y-coordinates and columns represent
-    x-coordinates. This is necessary when working with libraries like sci-kit image that use the unconventional
-    row= x, column= y convention.
+    """Transpose the first and second indices of an affine matrix.
 
-    Parameters:
-    -----------
-        affine_matrix (numpy.ndarray): A 3x3 affine transformation matrix.
+    This makes the matrix match the (soon to be deprecated) skimage convention
+    in which the first row matches the second axis of a NumPy array and
+    vice-versa.
+
+    Parameters
+    ----------
+    affine_matrix : numpy.ndarray (D+1, D+1)
+        An affine transformation matrix.
 
     Returns:
-        numpy.ndarray: The transformed affine matrix with rows representing y-coordinates and columns representing
-                       x-coordinates.
+    numpy.ndarray :
+        The 'transposed' affine matrix.
     """
     # swap columns
     new_affine_matrix = affine_matrix[:, [1, 0, 2]]
