@@ -1,14 +1,13 @@
 from magicgui import magic_factory
-from napari.layers import Layer
-from napari.types import LayerDataTuple
 from skimage import transform
 import numpy as np
 
 
 @magic_factory
 def apply_affine(
-        reference_layer: Layer, moving_layer: Layer
-        ) -> LayerDataTuple:
+        reference_layer: 'napari.layers.Layer',
+        moving_layer: 'napari.layers.Layer'
+        ) -> 'napari.types.LayerDataTuple':
     """Apply current affine transformation to selected layer.
 
     The input layer data will be transformed to match the reference layer.
