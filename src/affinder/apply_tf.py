@@ -36,7 +36,8 @@ def _apply_affine_image(image, affine, order, reference_shape):
 @magic_factory
 def apply_affine(
         reference_layer: 'napari.layers.Layer',
-        moving_layer: 'napari.layers.Layer'
+        moving_layer: 'napari.layers.Layer',
+        order: int = 0,
         ) -> 'napari.types.LayerDataTuple':
     """Apply current affine transformation to selected layer.
 
@@ -48,6 +49,8 @@ def apply_affine(
         Layer to use as reference for affine transformation.
     moving_layer : napari.layers.Layer
         Layer to apply affine to.
+    order : int in {0, 1, 2, 3, 4, 5}
+        The order of the interpolation.
 
     Returns
     -------
@@ -64,7 +67,7 @@ def apply_affine(
 
     # Apply the transformation
     transformed = _apply_affine_image(
-            moving_layer.data, affine, 0, reference_layer.data.shape
+            moving_layer.data, affine, order, reference_layer.data.shape
             )
 
     # Set the metadata
