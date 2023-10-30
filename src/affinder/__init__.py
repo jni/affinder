@@ -5,3 +5,4 @@ except ImportError:
 
 from .affinder import start_affinder
 from .copy_tf import copy_affine
+from .apply_tf import apply_affine
