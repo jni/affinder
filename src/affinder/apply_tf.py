@@ -3,6 +3,36 @@ from skimage import transform
 import numpy as np
 
 
+def _apply_affine_image(image, affine, order, reference_shape):
+    """Apply affine transformation to image.
+
+    Parameters
+    ----------
+    image : numpy.ndarray
+        Image to be transformed.
+    affine : numpy.ndarray
+        Affine transformation matrix.
+    order : int
+        The order of the interpolation.
+    reference_shape : tuple
+        Shape of the output image.
+
+    Returns
+    -------
+    numpy.ndarray
+        Transformed image.
+    """
+    if image.ndim == 2:
+        affine = tform_matrix_rc2xy(affine)
+    return transform.warp(
+            image,
+            np.linalg.inv(affine),
+            order=order,
+            output_shape=reference_shape,
+            preserve_range=True
+            )
+
+
 @magic_factory
 def apply_affine(
         reference_layer: 'napari.layers.Layer',
@@ -26,22 +56,18 @@ def apply_affine(
     """
     if 'Image' not in str(type(moving_layer)):
         raise NotImplementedError(
-            'Only image transforms supported at this point.'
-        )
+                'Only image transforms supported at this point.'
+                )
 
-    # Get image data to be transformed
-    im = moving_layer.data
-    # Apply transformation
-    affine = moving_layer.affine.affine_matrix
-    if im.ndim == 2:
-        affine = tform_matrix_rc2xy(affine)
-    im = transform.warp(
-            im,
-            np.linalg.inv(affine),
-            order=0,
-            output_shape=reference_layer.data.shape,
-            preserve_range=True
+    # Find the transformation relative to the reference image
+    affine = np.linalg.inv(reference_layer.affine) @ moving_layer.affine
+
+    # Apply the transformation
+    transformed = _apply_affine_image(
+            moving_layer.data, affine, 0, reference_layer.data.shape
             )
+
+    # Set the metadata
     layertype = 'image'
     ref_metadata = {
             n: getattr(reference_layer, n)
@@ -52,7 +78,7 @@ def apply_affine(
 
     metadata = {**mov_metadata, **ref_metadata, **name}
 
-    return (im, metadata, layertype)
+    return (transformed, metadata, layertype)
 
 
 def tform_matrix_rc2xy(affine_matrix: np.ndarray):
