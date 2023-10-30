@@ -9,8 +9,9 @@ import numpy as np
 def apply_affine(
         reference_layer: Layer, moving_layer: Layer
         ) -> LayerDataTuple:
-    """
-    Apply current affine transformation to selected layer. Affine will be reset afterwards.
+    """Apply current affine transformation to selected layer.
+
+    The input layer data will be transformed to match the reference layer.
 
     Parameters
     ----------
@@ -18,6 +19,11 @@ def apply_affine(
         Layer to use as reference for affine transformation.
     moving_layer : napari.layers.Layer
         Layer to apply affine to.
+
+    Returns
+    -------
+    LayerDataTuple
+        Layer data tuple with transformed data.
     """
     # Get image data to be transformed
     im = moving_layer.data
