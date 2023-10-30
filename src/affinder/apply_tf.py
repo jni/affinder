@@ -24,33 +24,33 @@ def apply_affine(
     LayerDataTuple
         Layer data tuple with transformed data.
     """
+    if 'Image' not in str(type(moving_layer)):
+        raise NotImplementedError(
+            'Only image transforms supported at this point.'
+        )
+
     # Get image data to be transformed
     im = moving_layer.data
     # Apply transformation
-    if 'Image' in str(type(moving_layer)):
-        affine = moving_layer.affine.affine_matrix
-        if im.ndim == 2:
-            affine = tform_matrix_rc2xy(affine)
-        im = transform.warp(
-                im,
-                np.linalg.inv(affine),
-                order=0,
-                output_shape=reference_layer.data.shape,
-                preserve_range=True
-                )
-        layertype = 'image'
-        ref_metadata = {
-                n: getattr(reference_layer, n)
-                for n in ['scale', 'translate', 'rotate', 'shear']
-                }
-        mov_metadata = moving_layer.as_layer_data_tuple()[1]
-        name = {'name': moving_layer.name + '_transformed'}
+    affine = moving_layer.affine.affine_matrix
+    if im.ndim == 2:
+        affine = tform_matrix_rc2xy(affine)
+    im = transform.warp(
+            im,
+            np.linalg.inv(affine),
+            order=0,
+            output_shape=reference_layer.data.shape,
+            preserve_range=True
+            )
+    layertype = 'image'
+    ref_metadata = {
+            n: getattr(reference_layer, n)
+            for n in ['scale', 'translate', 'rotate', 'shear']
+            }
+    mov_metadata = moving_layer.as_layer_data_tuple()[1]
+    name = {'name': moving_layer.name + '_transformed'}
 
-        metadata = {**mov_metadata, **ref_metadata, **name}
-    else:
-        raise NotImplementedError(
-                'Only image transforms supported at this point.'
-                )
+    metadata = {**mov_metadata, **ref_metadata, **name}
 
     return (im, metadata, layertype)
 
