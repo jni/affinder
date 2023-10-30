@@ -72,7 +72,7 @@ def tform_matrix_rc2xy(affine_matrix: np.ndarray):
         The 'transposed' affine matrix.
     """
     # swap columns
-    new_affine_matrix = affine_matrix[:, [1, 0, 2]]
+    swapped_cols = affine_matrix[:, [1, 0, 2]]
     # swap rows
-    new_affine_matrix = new_affine_matrix[[1, 0, 2], :]
-    return new_affine_matrix
+    swapped_both = swapped_cols[[1, 0, 2], :]
+    return swapped_both
