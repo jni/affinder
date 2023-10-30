@@ -124,3 +124,16 @@ def test_apply_affine():
     res_layer = widget(ref_layer, mov_layer)
 
     np.testing.assert_allclose(res_layer[0], ref_im)
+
+
+def test_apply_affine_nonimage():
+    ref_im = np.random.random((5, 5))
+    mov_pts = np.random.random((5, 2))
+
+    ref_layer = napari.layers.Image(ref_im)
+    mov_layer = napari.layers.Points(mov_pts)
+    mov_layer.affine = np.array([[0.5, 0, 0], [0, 0.5, 0], [0, 0, 1]])
+
+    widget = apply_affine()
+    with pytest.raises(NotImplementedError):
+        widget(ref_layer, mov_layer)
