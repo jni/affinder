@@ -1,34 +1,11 @@
-# Transformations
-Lets assume some user has found a desired allignment and is ready to apply a transformation. 
-This section discusses nuance when applying atransformation to an image.
+# Using a saved transform matrix
+Lets say we have used affinder to regester out moving image with the reference image and now we wish to use the resulting transform matrix for downstream analysis.
+The guide describes the required changes to make the matrix compatable with scipy and skimage transformations.
 
-## Scipy
-When using `scipy.ndimage.affine_transform()` you must use the inverse transformation matrix i.e, the transformation from the reference image to the moving image. 
-
-## Skimage
-Similar to scipy, when using `skimage.transform.warp()`, you must use the inverse transfromation matrix.
-Additionally, skimage uses X/Y coordinate conventions whereas napari uses NumPy like row/col coordinate conventions. This means that to use warp() correctly, you must first transpose the 0th and 1st row and column of the transformation matrix. e.g,
-
-```python
-def matrix_rc2xy(affine_matrix):
-    swapped_cols = affine_matrix[:, [1, 0, 2]]
-    swapped_rows = swapped_cols[[1, 0, 2], :]
-    return swapped_rows
-```
-
-## Examples
-### Scipy
-
-
-
-
-
-Please note that when using skimage.transform.warp():
-
-- napari uses row column coordinate conventions, whereas skimage.transform.warp uses XY coordinate conventions.
-- Additionally, ndimage.affine_transform and skimage.transform.warp expect the inverse transformation matrix, that is, the transformation from the reference image to the moving image. This is because when you want to create a new image, you need to find a value for every target pixel, so you want to go from every new pixel coordinate to the place it came from in the image you're transforming.
-
-please refer to the following code for reference on how to correctly use skimage.transform.warp():
+## Getting an affinder matrix
+Consider some image and its respective affine matrix. for this example we will use skimag's data.camera.
+The code below loads the image and then rotates it to generate our moving image. 
+We then programatically lauch th affinder widget and add some points to get our transform matrix
 
 ```python
 from skimage import data, transform
@@ -57,16 +34,31 @@ viewer.layers['image1_pts'].data = np.array([[150.02534429, 80.65355322],
                                              [314.75696913, 375.13825634],
                                              [184.33085012, 439.81718637]])
 
+mat = np.asarray(l1.affine)
+```
+
+At this point, `mat` holds the information required to transform the **moving** image to the **reference** image.
+Before this matrix can be used however, it requires some processing which differs depending on which transformation method is to be used.
+
+## Scipy
+
+`scipy.ndimage.affine_transform()` transforms from the reference image to the moving image, therefore we should use the inverese matrix from our affinder output. That's because when you want to create a new image, you need to find a value for every target pixel, so you want to go from every new pixel coordinate to the place it came from in the image you're transforming.
+
+```python
+tfd_ndi = ndi.affine_transform(image1, np.linalg.inv(mat))
+viewer.add_image(tfd_ndi, colormap='bop orange', blending='additive')
+```
+
+## Skimage
+Similar to scipy, when using `skimage.transform.warp()`, it transforms from reference to moving, so you must use the inverse transfromation matrix.
+Additionally, skimage uses X/Y coordinate conventions whereas napari uses NumPy like row/col coordinate conventions. This means that to use warp() correctly, you must first transpose the 0th and 1st row and column of the transformation matrix. e.g,
+
+```python
 def matrix_rc2xy(affine_matrix):
     swapped_cols = affine_matrix[:, [1, 0, 2]]
     swapped_rows = swapped_cols[[1, 0, 2], :]
     return swapped_rows
 
-mat = np.asarray(l1.affine)
-tfd_ndi = ndi.affine_transform(image1, np.linalg.inv(mat))
-viewer.add_image(tfd_ndi, colormap='bop orange', blending='additive')
 tfd_skim = transform.warp(image1, np.linalg.inv(matrix_rc2xy(mat)))
 viewer.add_image(tfd_skim, colormap='bop orange', blending='additive', visible=False)
-
-napari.run()
 ```
