@@ -42,7 +42,7 @@ Before this matrix can be used however, it requires some processing which differ
 
 ## Scipy
 
-`scipy.ndimage.affine_transform()` transforms from the reference image to the moving image, therefore we should use the inverese matrix from our affinder output. That's because when you want to create a new image, you need to find a value for every target pixel, so you want to go from every new pixel coordinate to the place it came from in the image you're transforming.
+`scipy.ndimage.affine_transform()` expects a matrix that transforms from the **reference** image to the **moving** image, therefore we should use the inverse matrix from our affinder output. That's because when you want to create a new image, you need to find a value for every target pixel, so you want to go from every new pixel coordinate to the place it came from in the image you're transforming.
 
 ```python
 tfd_ndi = ndi.affine_transform(image1, np.linalg.inv(mat))
@@ -51,7 +51,7 @@ viewer.add_image(tfd_ndi, colormap='bop orange', blending='additive')
 
 ## Skimage
 Similar to scipy, when using `skimage.transform.warp()`, it transforms from reference to moving, so you must use the inverse transfromation matrix.
-Additionally, skimage uses X/Y coordinate conventions whereas napari uses NumPy like row/col coordinate conventions. This means that to use warp() correctly, you must first transpose the 0th and 1st row and column of the transformation matrix. e.g,
+Additionally, skimage uses X/Y coordinate conventions whereas napari uses NumPy-like row/col coordinate conventions. This means that to use warp() correctly, you must first transpose the 0th and 1st row and column of the transformation matrix, as below.
 
 ```python
 def matrix_rc2xy(affine_matrix):
@@ -62,3 +62,5 @@ def matrix_rc2xy(affine_matrix):
 tfd_skim = transform.warp(image1, np.linalg.inv(matrix_rc2xy(mat)))
 viewer.add_image(tfd_skim, colormap='bop orange', blending='additive', visible=False)
 ```
+
+This should be fixed in skimage 2.0 as it moves fully to NumPy-like coordinates.
