@@ -1,4 +1,3 @@
-# Using a saved transform matrix
 Lets say we have used affinder to regester out moving image with the reference image and now we wish to use the resulting transform matrix for downstream analysis.
 The guide describes the required changes to make the matrix compatable with scipy and skimage transformations.
 

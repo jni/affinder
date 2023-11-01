@@ -1,4 +1,4 @@
-Using skimage.transform.warp()
+Using a saved transform matrix
 ==============
 
 .. include:: ../transform.md
