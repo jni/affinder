@@ -63,7 +63,18 @@ def apply_affine(
                 )
 
     # Find the transformation relative to the reference image
-    affine = np.linalg.inv(reference_layer.affine) @ moving_layer.affine
+    moving_scale = np.eye(moving_layer.data.ndim + 1)
+    moving_scale[:-1, :-1] = np.diag(moving_layer.scale)
+    reference_scale = np.eye(reference_layer.data.ndim + 1)
+    reference_scale[:-1, :-1] = np.diag(reference_layer.scale)
+    moving_translation = np.eye(moving_layer.data.ndim + 1)
+    moving_translation[:-1, -1] = moving_layer.translate
+    reference_translation = np.eye(reference_layer.data.ndim + 1)
+    reference_translation[:-1, -1] = reference_layer.translate
+    # Note: Affine transformations are not inherently commutative.
+    #       This seems to work, but I am uncertain if it is universally correct.
+    affine = (np.linalg.inv(reference_translation @ reference_scale @ reference_layer.affine)
+              @ moving_layer.affine @ moving_scale @ moving_translation)
 
     # Apply the transformation
     transformed = _apply_affine_image(
@@ -74,7 +85,7 @@ def apply_affine(
     layertype = 'image'
     ref_metadata = {
             n: getattr(reference_layer, n)
-            for n in ['scale', 'translate', 'rotate', 'shear']
+            for n in ['scale', 'translate', 'rotate', 'shear', 'affine']
             }
     mov_metadata = moving_layer.as_layer_data_tuple()[1]
     name = {'name': moving_layer.name + '_transformed'}
