@@ -13,6 +13,9 @@ contributions:
   - id: affinder.apply_affine
     python_name: affinder:apply_affine
     title: Apply affine...
+  - id: affinder.load_affine
+    python_name: affinder:load_affine
+    title: Load affine...
   widgets:
   - command: affinder.start_affinder
     display_name: Start affinder
@@ -20,3 +23,5 @@ contributions:
     display_name: Copy affine
   - command: affinder.apply_affine
     display_name: Apply affine
+  - command: affinder.load_affine
+    display_name: Load affine
