@@ -3,9 +3,7 @@ from magicgui import magic_factory
 from napari.layers import Layer
 
 
-@magic_factory(
-    affine={'mode': 'r'}
-    )
+@magic_factory(call_button='Load')
 def load_affine(layer: Layer, affine: str):
     """Load affine from string.
 
