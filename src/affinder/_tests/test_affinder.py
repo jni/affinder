@@ -139,17 +139,17 @@ def test_apply_affine_nonimage():
         widget(ref_layer, mov_layer)
 
 
-def test_load_affine():
-    existing_affine = np.array([[0.9, 0.1, 5], [0.4, 0.2, 9], [0, 0, 1]])
+def test_load_affine(tmp_path):
+    affile = tmp_path / 'test_affine.txt'
+    affine = np.array([[2, 0, 5], [0, 2, 5], [0, 0, 1]])
+    np.savetxt(affile, affine, delimiter=',')
 
     layer = napari.layers.Image(np.random.random((5, 5)))
-    layer.affine = existing_affine
 
-    widget = load_affine(,
-    widget(layer, './src/affinder/_tests/load_test/2d_test_affine.txt')
+    widget = load_affine()
+    widget(layer, affile)
+
     np.testing.assert_allclose(
-            layer.affine,
-            np.loadtxt('./src/affinder/_tests/load_test/2d_test_affine.txt',
-                       delimiter=',') @ existing_affine
-            )
+        layer.affine, affine
+    )
 
