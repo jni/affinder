@@ -1,4 +1,4 @@
-from affinder import start_affinder, copy_affine, apply_affine
+from affinder import start_affinder, copy_affine, apply_affine, load_affine
 from affinder.affinder import AffineTransformChoices
 from skimage import data, transform
 import numpy as np
@@ -137,3 +137,19 @@ def test_apply_affine_nonimage():
     widget = apply_affine()
     with pytest.raises(NotImplementedError):
         widget(ref_layer, mov_layer)
+
+
+def test_load_affine(tmp_path):
+    affile = tmp_path / 'test_affine.txt'
+    affine = np.array([[2, 0, 5], [0, 2, 5], [0, 0, 1]])
+    np.savetxt(affile, affine, delimiter=',')
+
+    layer = napari.layers.Image(np.random.random((5, 5)))
+
+    widget = load_affine()
+    widget(layer, affile)
+
+    np.testing.assert_allclose(
+        layer.affine, affine
+    )
+
