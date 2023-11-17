@@ -2,11 +2,10 @@ from pathlib import Path
 
 import numpy as np
 from magicgui import magic_factory
-from napari.layers import Layer
 
 
 @magic_factory(call_button='Load', affine={'mode': 'r'})
-def load_affine(layer: Layer, affine: Path):
+def load_affine(layer: 'napari.layers.Layer', affine: Path):
     """Load affine from string.
 
     Parameters
