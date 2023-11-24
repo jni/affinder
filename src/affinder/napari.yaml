@@ -1,10 +1,27 @@
 name: affinder
 display_name: affinder
+categories:
+  - Transformations
 contributions:
   commands:
   - id: affinder.start_affinder
     python_name: affinder:start_affinder
     title: Start affinder...
+  - id: affinder.copy_affine
+    python_name: affinder:copy_affine
+    title: Copy affine...
+  - id: affinder.apply_affine
+    python_name: affinder:apply_affine
+    title: Apply affine...
+  - id: affinder.load_affine
+    python_name: affinder:load_affine
+    title: Load affine...
   widgets:
   - command: affinder.start_affinder
     display_name: Start affinder
+  - command: affinder.copy_affine
+    display_name: Copy affine
+  - command: affinder.apply_affine
+    display_name: Apply affine
+  - command: affinder.load_affine
+    display_name: Load affine

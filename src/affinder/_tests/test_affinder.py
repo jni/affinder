@@ -1,4 +1,4 @@
-from affinder import start_affinder
+from affinder import start_affinder, copy_affine, apply_affine, load_affine
 from affinder.affinder import AffineTransformChoices
 from skimage import data, transform
 import numpy as np
@@ -7,6 +7,7 @@ import zarr
 import napari
 import pytest
 from copy import copy
+from scipy import ndimage as ndi
 
 nuclei3D_pts = np.array([[30., 68.47649186, 67.08770344],
                          [30., 85.14195298, 51.81103074],
@@ -221,3 +222,56 @@ def test_ensure_different_layers(make_napari_viewer):
     assert widget.reference.value != widget.moving.value
     widget.reference.value = widget.moving.value
     assert widget.reference.value != widget.moving.value
+
+
+def test_copy_affine():
+    layer0 = napari.layers.Image(np.random.random((5, 5)))
+    layer1 = napari.layers.Image(np.random.random((5, 5)))
+    layer0.affine = np.array([[0.9, 0.1, 5], [0.4, 0.2, 9], [0, 0, 1]])
+
+    widget = copy_affine()
+    widget(layer0, layer1)
+    np.testing.assert_allclose(layer0.affine, layer1.affine)
+
+
+def test_apply_affine():
+    ref_im = np.random.random((5, 5))
+    mov_im = ndi.zoom(ref_im, 2, order=0)
+
+    ref_layer = napari.layers.Image(ref_im)
+    mov_layer = napari.layers.Image(mov_im)
+    mov_layer.affine = np.array([[0.5, 0, 0], [0, 0.5, 0], [0, 0, 1]])
+
+    widget = apply_affine()
+    res_layer = widget(ref_layer, mov_layer)
+
+    np.testing.assert_allclose(res_layer[0], ref_im)
+
+
+def test_apply_affine_nonimage():
+    ref_im = np.random.random((5, 5))
+    mov_pts = np.random.random((5, 2))
+
+    ref_layer = napari.layers.Image(ref_im)
+    mov_layer = napari.layers.Points(mov_pts)
+    mov_layer.affine = np.array([[0.5, 0, 0], [0, 0.5, 0], [0, 0, 1]])
+
+    widget = apply_affine()
+    with pytest.raises(NotImplementedError):
+        widget(ref_layer, mov_layer)
+
+
+def test_load_affine(tmp_path):
+    affile = tmp_path / 'test_affine.txt'
+    affine = np.array([[2, 0, 5], [0, 2, 5], [0, 0, 1]])
+    np.savetxt(affile, affine, delimiter=',')
+
+    layer = napari.layers.Image(np.random.random((5, 5)))
+
+    widget = load_affine()
+    widget(layer, affile)
+
+    np.testing.assert_allclose(
+        layer.affine, affine
+    )
+
