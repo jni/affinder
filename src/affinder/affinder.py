@@ -14,7 +14,6 @@ from skimage.transform import (
         SimilarityTransform,
         )
 
-
 class AffineTransformChoices(Enum):
     affine = AffineTransform
     Euclidean = EuclideanTransform
@@ -71,8 +70,13 @@ def next_layer_callback(
                         pts0, pts1, ndim, model_class=model_class
                         )
                 ref_mat = reference_image_layer.affine.affine_matrix
-                moving_image_layer.affine = (ref_mat @ mat.params)
                 moving_points_layer.affine = (ref_mat @ mat.params)
+                # must pad affine matrix with identity matrix if dims of moving layer different from reference#####
+                moving_image_layer.affine.affine_matrix = convert_affine_matrix_to_ndims(
+                    moving_points_layer.affine.affine_matrix, ndims(moving_image_layer))
+                    #TODO currently have to move viewer to get this new affine transform to display when adding additional point pairs after the first set
+
+
                 if output is not None:
                     np.savetxt(output, np.asarray(mat.params), delimiter=',')
             viewer.layers.selection.active = reference_points_layer
@@ -99,7 +103,7 @@ def ndims(layer):
         return layer.data[0].shape[1]
     elif isinstance(layer, Points):
         # (n, D) array of n points with D dimensions
-        return layer.data.shape[1]
+        return layer.data.shape[-1]
     elif isinstance(layer, Vectors):
         # (n, 2, D) of n vectors with start pt and projections in D dimensions
         return layer.data.shape[-1]
@@ -109,7 +113,6 @@ def ndims(layer):
                 "find its ndims."
                 )
 
-
 def add_zeros_at_start_of_last_axis(arr):
     upsize_last_axis = lambda size: size[:-1] + (size[-1] + 1,)
     new_arr = np.zeros(upsize_last_axis(arr.shape))
@@ -117,24 +120,38 @@ def add_zeros_at_start_of_last_axis(arr):
     return new_arr
 
 
-""" 
-#maybe add option for user to specific which axis to pad (and whether to 
-#pad from front or back or somewhere in the middle)
+def convert_affine_to_ndims(affine, target_ndims):
+    if affine.ndim == target_ndims:
+        return affine
+    new_affine = deepcopy(affine)
+    if affine.ndim < target_ndims:
+        converted_matrix = np.identity(target_ndims+1)
+        start_i = target_ndims - affine.ndim
+        converted_matrix[start_i:, start_i:] = affine.affine_matrix
+        new_affine.affine_matrix = converted_matrix
+    elif affine.ndim > target_ndims:
+        new_affine.affine_matrix =  affine.affine_matrix[affine.ndim-target_ndims:, affine.ndim-target_ndims:]
 
-def add_zeros_at_end_of_last_axis(arr):
-    new_arr = np.zeros((arr.shape[0], arr.shape[1] + 1))
-    new_arr[:, :arr.shape[1]] = arr
-    return new_arr
-    
-def add_zeros_at_axis(arr, axis):
-    ...
-"""
+    return new_affine
 
+def convert_affine_matrix_to_ndims(matrix, target_ndims):
+    affine_ndim = matrix.shape[0]-1
+    if affine_ndim < target_ndims:
+        converted_matrix = np.identity(target_ndims+1)
+        start_i = target_ndims - affine_ndim
+        converted_matrix[start_i:, start_i:] = matrix
+        return converted_matrix
+    elif affine_ndim > target_ndims:
+        return  matrix[affine_ndim-target_ndims:, affine_ndim-target_ndims:]
+    else:
+        return matrix
 
 # this will take a long time for vectors and points if lots of dimensions need
 # to be padded
 def expand_dims(layer, target_ndims, viewer, extract_index=0):
-
+    """
+    will add empty dimensions to layer until its dimensions are target_ndims
+    """
     while ndims(layer) < target_ndims:
         if isinstance(layer, Image) or isinstance(layer, Labels):
             # add dimension to beginning of dimension list
@@ -180,70 +197,6 @@ def expand_dims(layer, target_ndims, viewer, extract_index=0):
                     )
     return layer
 
-
-def extract_ndims(layer, target_ndims, viewer, extract_index=-1):
-    """
-    return the last target_ndims dimensions of the layer
-    """
-    # get index of dimensions to extract from
-    if extract_index == -1:
-        extract_dims_i = list(range(ndims(layer) - target_ndims, ndims(layer)))
-    elif extract_index == 0:
-        extract_dims_i = list(0, target_ndims)
-
-    if isinstance(layer, Image) or isinstance(layer, Labels):
-        # extract the first value from each of the discarded dimensions
-        while ndims(layer) > target_ndims:
-            layer.data = np.take(layer.data, extract_index, axis=0)
-    elif isinstance(layer, Shapes):
-        # list of s shapes, containing n * D array of n points with D dimensions
-        layer.data = [
-                np.take(p, extract_dims_i,
-                        axis=0) for s in layer.data for p in s
-                ]
-    elif isinstance(layer, Points):
-        # (n, D) array of n points with D dimensions
-        new_arr = np.take(layer.data, extract_dims_i, axis=1)
-        # napari doesn't let you change D dimensions of points so have to
-        # create duplicate layer and delete the existing one...
-        new_layer = napari.layers.Points(
-                new_arr, name=layer.name, properties=layer.properties
-                )
-        viewer.layers.remove(layer.name)
-        viewer.add_layer(new_layer)
-        layer = new_layer
-    elif isinstance(layer, Vectors):
-        # (n, 2, D) of n vectors with start pt and projections in D dimensions
-        while ndims(layer) > target_ndims:
-            n, b, D = layer.data.shape
-            new_arr = np.zeros((n, b, D - 1))
-            new_arr[:, 0, :] = np.take(
-                    layer.data[:, 0, :], extract_dims_i, axis=1
-                    )
-            new_arr[:, 1, :] = np.take(
-                    layer.data[:, 1, :], extract_dims_i, axis=1
-                    )
-            new_layer = napari.layers.Vectors(
-                    new_arr, name=layer.name, properties=layer.properties
-                    )
-            viewer.layers.remove(layer.name)
-            viewer.add_layer(new_layer)
-            layer = new_layer
-    else:
-        raise Warning(
-                layer, "layer type is not currently supported - cannot "
-                "extract its dimensions."
-                )
-    return layer
-
-
-def expand_or_extract_ndims(layer, target_ndims, viewer):
-    new_layer = None
-    if ndims(layer) < target_ndims:
-        new_layer = expand_dims(layer, target_ndims, viewer)
-    elif ndims(layer) > target_ndims:
-        new_layer = extract_ndims(layer, target_ndims, viewer)
-    return new_layer
 
 def _update_unique_choices(widget, choice_name):
     """Update the selected choice in a ComboBox widget to be unique.
@@ -310,13 +263,17 @@ def start_affinder(
                         )
 
         if ndims(moving) != ndims(reference):
-            # make no. dimensions the same (so skimage transforms work)
-            moving = expand_or_extract_ndims(moving, ndims(reference), viewer)
             # make copy of moving layer if selected
             if keep_original_moving_layer:
+                print("keep og moving layer selected")
                 og_layer = deepcopy(moving)
                 og_layer.name = og_layer.name + " original"
                 viewer.add_layer(og_layer)
+
+            # pad dimensions of moving image if it's less than reference
+            #moving = expand_or_extract_ndims(moving, ndims(reference), viewer) # do not destructively change layers
+            if ndims(moving) < ndims(reference):
+                moving = expand_dims(moving, target_ndims=ndims(reference), viewer=viewer)
 
         # focus on the reference layer
         reset_view(viewer, reference)
@@ -331,15 +288,14 @@ def start_affinder(
             if points_layers[i] is None:
                 layer, color = points_layers_to_add[i]
                 new_layer = viewer.add_points(
-                        ndim=layer.ndim,
+                        ndim=reference.ndim, # ndims of all points layers same as reference (so skimage transforms work)
                         name=layer.name + '_pts',
-                        affine=layer.affine,
+                        affine=convert_affine_to_ndims(layer.affine, ndims(reference)),
                         face_color=[color],
                         )
                 points_layers[i] = new_layer
         pts_layer0 = points_layers[0]
         pts_layer1 = points_layers[1]
-
         # make a callback for points added
         callback = next_layer_callback(
                 viewer=viewer,
