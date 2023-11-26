@@ -200,9 +200,10 @@ def test_2D_3D(make_napari_viewer, tmp_path, reference, moving):
     # type Points of Vectors and not same dimensions as reference layer - so l1
     # is a redundant layer that is no longer used as the real moving layer -
     # this is why we use viewer.layers['layer1] instead of l1
-    expected_affine = np.array([[1.000000e+00, 2.890235e-17, 0.000000e+00],
-                                [-7.902889e-18, 1.000000e+00, 1.421085e-14],
-                                [0.000000e+00, 0.000000e+00, 1.000000e+00]])
+    expected_affine = np.array([[1.00000000e+00,  0.00000000e+00,  0.00000000e+00, 0.00000000e+00],
+                                [0.00000000e+00, 1.000000e+00, 2.890235e-17, 0.000000e+00],
+                                [0.00000000e+00, -7.902889e-18, 1.000000e+00, 1.421085e-14],
+                                [0.00000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00]])
 
     np.testing.assert_allclose(
             actual_affine, expected_affine, rtol=10, atol=1e-10
