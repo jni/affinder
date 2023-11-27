@@ -86,6 +86,13 @@ def close_affinder(layers, callback):
         layer.mode = 'pan_zoom'
 
 
+# make a bindable function to remove points layers after finishing
+@magicgui
+def remove_pts_layers(viewer, layers):
+    for layer in layers:
+        viewer.layers.remove(layer)
+
+
 def _update_unique_choices(widget, choice_name):
     """Update the selected choice in a ComboBox widget to be unique.
 
@@ -126,6 +133,7 @@ def _on_affinder_main_init(widget):
         layout='vertical',
         output={'mode': 'w'},
         viewer={'visible': False, 'label': ' '},
+        keep_pts={'label': 'Keep points layers', 'tooltip': 'Keep point layers after "Finish" '},
         )
 def start_affinder(
         viewer: 'napari.viewer.Viewer',
@@ -136,6 +144,7 @@ def start_affinder(
         moving_points: Optional['napari.layers.Points'] = None,
         model: AffineTransformChoices,
         output: Optional[pathlib.Path] = None,
+        keep_pts: bool = False,
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
@@ -184,10 +193,15 @@ def start_affinder(
         close_affinder.layers.bind(points_layers)
         close_affinder.callback.bind(callback)
 
+        remove_pts_layers.viewer.bind(viewer)
+        remove_pts_layers.layers.bind(points_layers)
+
         # change the button/mode for next run
         start_affinder._call_button.text = 'Finish'
     else:  # we are in Finish mode
         close_affinder()
+        if not keep_pts:
+            remove_pts_layers()
         start_affinder._call_button.text = 'Start'
 
 
