@@ -9,7 +9,6 @@ import pytest
 from scipy import ndimage as ndi
 from pathlib import Path
 
-
 layer0_pts = np.array([[140.38371886,
                         322.5390704], [181.91866481, 319.65803368],
                        [176.15659138, 259.1562627],
@@ -165,7 +164,4 @@ def test_load_affine(tmp_path):
     widget = load_affine()
     widget(layer, affile)
 
-    np.testing.assert_allclose(
-        layer.affine, affine
-    )
-
+    np.testing.assert_allclose(layer.affine, affine)
