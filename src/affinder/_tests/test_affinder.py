@@ -7,6 +7,7 @@ import zarr
 import napari
 import pytest
 from scipy import ndimage as ndi
+from pathlib import Path
 
 
 layer0_pts = np.array([[140.38371886,
@@ -21,8 +22,9 @@ layer1_pts = np.array([[70.94741072,
 # get reference and moving layer types
 im0 = data.camera()
 im1 = transform.rotate(im0[100:, 32:496], 60)
-labels0 = zarr.open('./src/affinder/_tests/labels0.zarr', mode='r')
-labels1 = zarr.open('./src/affinder/_tests/labels1.zarr', mode='r')
+this_dir = Path(__file__).parent.absolute()
+labels0 = zarr.open(this_dir / 'labels0.zarr', mode='r')
+labels1 = zarr.open(this_dir / 'labels1.zarr', mode='r')
 
 
 def make_vector_border(layer_pts):
@@ -119,6 +121,20 @@ def test_apply_affine():
     ref_layer = napari.layers.Image(ref_im)
     mov_layer = napari.layers.Image(mov_im)
     mov_layer.affine = np.array([[0.5, 0, 0], [0, 0.5, 0], [0, 0, 1]])
+
+    widget = apply_affine()
+    res_layer = widget(ref_layer, mov_layer)
+
+    np.testing.assert_allclose(res_layer[0], ref_im)
+
+
+def test_apply_affine_with_scale():
+    ref_im = np.random.random((5, 5))
+    mov_im = ndi.zoom(ref_im, 2, order=0)
+
+    ref_layer = napari.layers.Image(ref_im, scale=(0.2, 0.2))
+    mov_layer = napari.layers.Image(mov_im, scale=(0.4, 0.4))
+    mov_layer.affine = np.array([[0.25, 0, 0], [0, 0.25, 0], [0, 0, 1]])
 
     widget = apply_affine()
     res_layer = widget(ref_layer, mov_layer)
