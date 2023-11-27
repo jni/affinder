@@ -1,0 +1,6 @@
+repos:
+- repo: https://github.com/google/yapf
+  rev: 'v0.40.2'  # Use the sha / tag you want to point at
+  hooks:
+  - id: yapf
+    exclude: docs/conf.py
