@@ -91,7 +91,7 @@ def apply_affine(
     layertype = 'image'
     ref_metadata = {
             n: getattr(reference_layer, n)
-            for n in ['scale', 'translate', 'rotate', 'shear']
+            for n in ['scale', 'translate', 'rotate', 'shear', 'affine']
             }
     mov_metadata = moving_layer.as_layer_data_tuple()[1]
     name = {'name': moving_layer.name + '_transformed'}
