@@ -22,7 +22,7 @@ layer1_pts = np.array([[70.94741072,
 # get reference and moving layer types
 im0 = data.camera()
 im1 = transform.rotate(im0[100:, 32:496], 60)
-this_dir = Path('__file__').parent
+this_dir = Path(__file__).parent.absolute()
 labels0 = zarr.open(this_dir / 'labels0.zarr', mode='r')
 labels1 = zarr.open(this_dir / 'labels1.zarr', mode='r')
 
