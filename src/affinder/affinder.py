@@ -208,7 +208,6 @@ def start_affinder(
         if delete_pts:
             start_affinder.remove_points_layers()
         start_affinder._call_button.text = 'Start'
-        start_affinder.output = None
 
 
 def calculate_transform(src, dst, model_class=AffineTransform):
