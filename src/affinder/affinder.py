@@ -1,16 +1,17 @@
+import functools
+import pathlib
 import warnings
+from enum import Enum
 from typing import Optional
 
-from enum import Enum
-import pathlib
+import numpy as np
 import toolz as tz
 from magicgui import magicgui, magic_factory
-import numpy as np
 from skimage.transform import (
-        AffineTransform,
-        EuclideanTransform,
-        SimilarityTransform,
-        )
+    AffineTransform,
+    EuclideanTransform,
+    SimilarityTransform,
+)
 
 
 class AffineTransformChoices(Enum):
@@ -86,7 +87,7 @@ def close_affinder(layers, callback):
         layer.mode = 'pan_zoom'
 
 
-# make a bindable function to remove points layers after finishing
+# make function to remove points layers after finishing
 @magicgui
 def remove_pts_layers(viewer, layers):
     for layer in layers:
@@ -133,7 +134,8 @@ def _on_affinder_main_init(widget):
         layout='vertical',
         output={'mode': 'w'},
         viewer={'visible': False, 'label': ' '},
-        keep_pts={'label': 'Keep points layers', 'tooltip': 'Keep point layers after "Finish" '},
+        delete_pts={'label': 'Delete points layers when done ',
+                    'tooltip': 'If ticked, the points layers used in alignment will be deleted when clicking "Finish".'},
         )
 def start_affinder(
         viewer: 'napari.viewer.Viewer',
@@ -144,7 +146,7 @@ def start_affinder(
         moving_points: Optional['napari.layers.Points'] = None,
         model: AffineTransformChoices,
         output: Optional[pathlib.Path] = None,
-        keep_pts: bool = False,
+        delete_pts: bool = False,
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
@@ -200,7 +202,7 @@ def start_affinder(
         start_affinder._call_button.text = 'Finish'
     else:  # we are in Finish mode
         close_affinder()
-        if not keep_pts:
+        if delete_pts:
             remove_pts_layers()
         start_affinder._call_button.text = 'Start'
 
