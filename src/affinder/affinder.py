@@ -6,7 +6,7 @@ from typing import Optional
 
 import numpy as np
 import toolz as tz
-from magicgui import magicgui, magic_factory
+from magicgui import magic_factory
 from skimage.transform import (
         AffineTransform,
         EuclideanTransform,
@@ -79,8 +79,6 @@ def next_layer_callback(
             reset_view(viewer, reference_image_layer)
 
 
-# make a bindable function to shut things down
-@magicgui
 def close_affinder(layers, callback):
     for layer in layers:
         layer.events.data.disconnect(callback)
@@ -88,7 +86,6 @@ def close_affinder(layers, callback):
 
 
 # make function to remove points layers after finishing
-@magicgui
 def remove_pts_layers(viewer, layers):
     for layer in layers:
         viewer.layers.remove(layer)
@@ -134,8 +131,12 @@ def _on_affinder_main_init(widget):
         layout='vertical',
         output={'mode': 'w'},
         viewer={'visible': False, 'label': ' '},
-        delete_pts={'label': 'Delete points layers when done ',
-                    'tooltip': 'If ticked, the points layers used in alignment will be deleted when clicking "Finish".'},
+        delete_pts={
+                'label':
+                        'Delete points layers when done ',
+                'tooltip':
+                        'If ticked, the points layers used in alignment will be deleted when clicking "Finish".'
+                },
         )
 def start_affinder(
         viewer: 'napari.viewer.Viewer',
@@ -192,18 +193,18 @@ def start_affinder(
         viewer.layers.selection.active = pts_layer0
         pts_layer0.mode = 'add'
 
-        close_affinder.layers.bind(points_layers)
-        close_affinder.callback.bind(callback)
-
-        remove_pts_layers.viewer.bind(viewer)
-        remove_pts_layers.layers.bind(points_layers)
-
+        start_affinder.close = functools.partial(
+                close_affinder, points_layers, callback
+                )
+        start_affinder.remove_points_layers = functools.partial(
+                remove_pts_layers, viewer, points_layers
+                )
         # change the button/mode for next run
         start_affinder._call_button.text = 'Finish'
     else:  # we are in Finish mode
-        close_affinder()
+        start_affinder.close()
         if delete_pts:
-            remove_pts_layers()
+            start_affinder.remove_points_layers()
         start_affinder._call_button.text = 'Start'
 
 
