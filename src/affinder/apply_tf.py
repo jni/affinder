@@ -1,5 +1,6 @@
 from magicgui import magic_factory
 from skimage import transform
+from napari.utils.transforms import CompositeAffine
 import numpy as np
 
 
@@ -62,8 +63,24 @@ def apply_affine(
                 'Only image transforms supported at this point.'
                 )
 
+    reference_meta = CompositeAffine(
+            scale=reference_layer.scale,
+            translate=reference_layer.translate,
+            rotate=reference_layer.rotate,
+            shear=reference_layer.shear,
+            )
+    moving_meta = CompositeAffine(
+            scale=moving_layer.scale,
+            translate=moving_layer.translate,
+            rotate=moving_layer.rotate,
+            shear=moving_layer.shear,
+            )
     # Find the transformation relative to the reference image
-    affine = np.linalg.inv(reference_layer.affine) @ moving_layer.affine
+    affine = (
+            np.linalg.inv(reference_meta)
+            @ np.linalg.inv(reference_layer.affine) @ moving_layer.affine
+            @ moving_meta
+            )
 
     # Apply the transformation
     transformed = _apply_affine_image(
@@ -74,7 +91,7 @@ def apply_affine(
     layertype = 'image'
     ref_metadata = {
             n: getattr(reference_layer, n)
-            for n in ['scale', 'translate', 'rotate', 'shear']
+            for n in ['scale', 'translate', 'rotate', 'shear', 'affine']
             }
     mov_metadata = moving_layer.as_layer_data_tuple()[1]
     name = {'name': moving_layer.name + '_transformed'}

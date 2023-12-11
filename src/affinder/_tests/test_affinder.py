@@ -6,6 +6,7 @@ from itertools import product
 import zarr
 import napari
 import pytest
+from pathlib import Path
 from copy import copy
 from scipy import ndimage as ndi
 
@@ -44,6 +45,12 @@ nuclei2D_transformed_labels = zarr.open(
 nuclei3D_labels = zarr.open(
         './src/affinder/_tests/nuclei3D_labels.zarr', mode='r'
         )  #########
+
+im0 = data.camera()
+im1 = transform.rotate(im0[100:, 32:496], 60)
+this_dir = Path(__file__).parent.absolute()
+labels0 = zarr.open(this_dir / 'labels0.zarr', mode='r')
+labels1 = zarr.open(this_dir / 'labels1.zarr', mode='r')
 
 
 def make_vector_border(layer_pts):
@@ -199,10 +206,12 @@ def test_2D_3D(make_napari_viewer, tmp_path, reference, moving):
     # type Points of Vectors and not same dimensions as reference layer - so l1
     # is a redundant layer that is no longer used as the real moving layer -
     # this is why we use viewer.layers['layer1] instead of l1
-    expected_affine = np.array([[1.00000000e+00,  0.00000000e+00,  0.00000000e+00, 0.00000000e+00],
-                                [0.00000000e+00, 1.000000e+00, 2.890235e-17, 0.000000e+00],
-                                [0.00000000e+00, -7.902889e-18, 1.000000e+00, 1.421085e-14],
-                                [0.00000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00]])
+    expected_affine = np.array(
+            [[1.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
+             [0.00000000e+00, 1.000000e+00, 2.890235e-17, 0.000000e+00],
+             [0.00000000e+00, -7.902889e-18, 1.000000e+00, 1.421085e-14],
+             [0.00000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00]]
+            )
 
     np.testing.assert_allclose(
             actual_affine, expected_affine, rtol=10, atol=1e-10
@@ -248,6 +257,20 @@ def test_apply_affine():
     np.testing.assert_allclose(res_layer[0], ref_im)
 
 
+def test_apply_affine_with_scale():
+    ref_im = np.random.random((5, 5))
+    mov_im = ndi.zoom(ref_im, 2, order=0)
+
+    ref_layer = napari.layers.Image(ref_im, scale=(0.2, 0.2))
+    mov_layer = napari.layers.Image(mov_im, scale=(0.4, 0.4))
+    mov_layer.affine = np.array([[0.25, 0, 0], [0, 0.25, 0], [0, 0, 1]])
+
+    widget = apply_affine()
+    res_layer = widget(ref_layer, mov_layer)
+
+    np.testing.assert_allclose(res_layer[0], ref_im)
+
+
 def test_apply_affine_nonimage():
     ref_im = np.random.random((5, 5))
     mov_pts = np.random.random((5, 2))
@@ -271,7 +294,4 @@ def test_load_affine(tmp_path):
     widget = load_affine()
     widget(layer, affile)
 
-    np.testing.assert_allclose(
-        layer.affine, affine
-    )
-
+    np.testing.assert_allclose(layer.affine, affine)
