@@ -193,6 +193,8 @@ def test_remove_points_layers(remove_pts, make_napari_viewer):
 
     widget()  # close the widget
 
+    assert widget._call_button.text == 'Start'
+
     assert remove_pts != any(
             pt_layer in viewer.layers
             for pt_layer in ['ref_im_pts', 'mov_im_pts']
