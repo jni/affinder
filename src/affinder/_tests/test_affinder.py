@@ -165,3 +165,33 @@ def test_load_affine(tmp_path):
     widget(layer, affile)
 
     np.testing.assert_allclose(layer.affine, affine)
+
+
+@pytest.mark.parametrize('remove_pts', [True, False])
+def test_remove_points_layers(remove_pts, make_napari_viewer):
+    """Check whether remove_points_layer option actually removes the layers."""
+    ref_im = np.random.random((5, 5))
+    mov_im = np.random.random((5, 5))
+    ref_pts = np.array([[1, 1], [2, 2], [1, 4]], dtype=float)
+    mov_pts = np.array([[4, 1], [2, 2], [1, 4]], dtype=float)
+
+    viewer = make_napari_viewer()
+    qtwidget, widget = viewer.window.add_plugin_dock_widget(
+            'affinder', 'Start affinder'
+            )
+    widget(
+            viewer=viewer,
+            reference=ref_im,
+            moving=mov_im,
+            model=AffineTransformChoices.affine,
+            delete_pts=remove_pts
+            )
+    viewer.layers['ref_im_pts'].data = ref_pts
+    viewer.layers['mov_im_pts'].data = mov_pts
+
+    widget()  # close the widget
+
+    assert remove_pts != any(
+            pt_layer in viewer.layers
+            for pt_layer in ['ref_im_pts', 'mov_im_pts']
+            )
