@@ -133,9 +133,11 @@ def _on_affinder_main_init(widget):
         viewer={'visible': False, 'label': ' '},
         delete_pts={
                 'label':
-                        'Delete points layers when done ',
-                'tooltip':
-                        'If ticked, the points layers used in alignment will be deleted when clicking "Finish".'
+                        'Delete points layers when done',
+                'tooltip': (
+                        'If ticked, the points layers used in alignment '
+                        'will be deleted when clicking "Finish".'
+                        ),
                 },
         )
 def start_affinder(
