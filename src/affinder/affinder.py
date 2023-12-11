@@ -8,10 +8,10 @@ import numpy as np
 import toolz as tz
 from magicgui import magicgui, magic_factory
 from skimage.transform import (
-    AffineTransform,
-    EuclideanTransform,
-    SimilarityTransform,
-)
+        AffineTransform,
+        EuclideanTransform,
+        SimilarityTransform,
+        )
 
 
 class AffineTransformChoices(Enum):
