@@ -144,8 +144,8 @@ def test_3D_2D(make_napari_viewer, tmp_path, reference, moving):
             output=tmp_path / 'my_affine.txt'
             )
 
-    viewer.layers['layer0_pts'].data = nuclei3D_pts
-    viewer.layers['layer1_pts'].data = nuclei2D_3Dpts
+    viewer.layers['layer0_pts'].data = nuclei3D_2Dpts
+    viewer.layers['layer1_pts'].data = nuclei2D_2Dpts
 
     actual_affine = np.asarray(viewer.layers['layer1'].affine)
     # start_affinder currently makes a clone of moving layer when it's of
@@ -154,10 +154,9 @@ def test_3D_2D(make_napari_viewer, tmp_path, reference, moving):
     # this is why we use viewer.layers['layer1] instead of l1
 
     expected_affine = np.array(
-            [[1.00000000e+00, 0.00000000e+00, 0.00000000e+00, 3.00000000e+01],
-             [0.00000000e+00, 1.00000000e+00, 2.89023467e-17, 0.00000000e+00],
-             [0.00000000e+00, -7.90288925e-18, 1.00000000e+00, 1.42108547e-14],
-             [0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 1.00000000e+00]]
+            [[0.00000000e+00, 0.00000000e+00, 3.00000000e+01],
+             [1.00000000e+00, 2.89023467e-17, 0.00000000e+00],
+             [-7.90288925e-18, 1.00000000e+00, 1.42108547e-14]]
             )
 
     np.testing.assert_allclose(

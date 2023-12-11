@@ -70,13 +70,13 @@ def next_layer_callback(
                         pts0, pts1, ndim, model_class=model_class
                         )
                 ref_mat = reference_image_layer.affine.affine_matrix
+                # must shrink ndims of affine matrix if dims of image layer is bigger than moving layer #####
+                if reference_image_layer.ndim > moving_image_layer.ndim:
+                    ref_mat = convert_affine_matrix_to_ndims(ref_mat, moving_image_layer.ndim)
                 moving_points_layer.affine = (ref_mat @ mat.params)
-                # must pad affine matrix with identity matrix if dims of moving layer different from reference#####
-                moving_image_layer.affine.affine_matrix = convert_affine_matrix_to_ndims(
+                # must pad affine matrix with identity matrix if dims of moving layer smaller #####
+                moving_image_layer.affine = convert_affine_matrix_to_ndims(
                     moving_points_layer.affine.affine_matrix, ndims(moving_image_layer))
-                    #TODO currently have to move viewer to get this new affine transform to display when adding additional point pairs after the first set
-
-
                 if output is not None:
                     np.savetxt(output, np.asarray(mat.params), delimiter=',')
             viewer.layers.selection.active = reference_points_layer
@@ -253,14 +253,14 @@ def start_affinder(
 
     if mode == 'Start':
 
-        if model == AffineTransformChoices.affine:
-            if (ndims(moving) != 2) or (ndims(reference) != 2):
-                raise ValueError(
-                        "Choose different model: Affine transform "
-                        "cannot be used if layers are not both 2D. "
-                        "Please choose a different model "
-                        "type (not \"affine\")"
-                        )
+        #if model == AffineTransformChoices.affine:
+        #    if (ndims(moving) != 2) or (ndims(reference) != 2):
+        #        raise ValueError(
+        #                "Choose different model: Affine transform "
+        #                "cannot be used if layers are not both 2D. "
+        #                "Please choose a different model "
+        #                "type (not \"affine\")"
+        #                )
 
         if ndims(moving) != ndims(reference):
             # make copy of moving layer if selected
@@ -272,8 +272,8 @@ def start_affinder(
 
             # pad dimensions of moving image if it's less than reference
             #moving = expand_or_extract_ndims(moving, ndims(reference), viewer) # do not destructively change layers
-            if ndims(moving) < ndims(reference):
-                moving = expand_dims(moving, target_ndims=ndims(reference), viewer=viewer)
+            #if ndims(moving) < ndims(reference):
+            #    moving = expand_dims(moving, target_ndims=ndims(reference), viewer=viewer)
 
         # focus on the reference layer
         reset_view(viewer, reference)
@@ -284,13 +284,14 @@ def start_affinder(
                                 (moving, (1.0, 0.498, 0.055, 1.0))]
 
         # make points layer if it was not specified
+        estimation_ndim = min(reference.ndim, moving.ndim)
         for i in range(len(points_layers)):
             if points_layers[i] is None:
                 layer, color = points_layers_to_add[i]
                 new_layer = viewer.add_points(
-                        ndim=reference.ndim, # ndims of all points layers same as reference (so skimage transforms work)
+                        ndim=estimation_ndim, # ndims of all points layers same lowest ndim of reference or moving
                         name=layer.name + '_pts',
-                        affine=convert_affine_to_ndims(layer.affine, ndims(reference)),
+                        affine=convert_affine_to_ndims(layer.affine, estimation_ndim),
                         face_color=[color],
                         )
                 points_layers[i] = new_layer
