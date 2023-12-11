@@ -176,6 +176,8 @@ def test_remove_points_layers(remove_pts, make_napari_viewer):
     mov_pts = np.array([[4, 1], [2, 2], [1, 4]], dtype=float)
 
     viewer = make_napari_viewer()
+    viewer.add_image(ref_im)
+    viewer.add_image(mov_im)
     qtwidget, widget = viewer.window.add_plugin_dock_widget(
             'affinder', 'Start affinder'
             )
