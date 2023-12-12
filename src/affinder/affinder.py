@@ -1,18 +1,23 @@
+import functools
+import pathlib
 import warnings
+from enum import Enum
 from typing import Optional
 import napari
 from napari.layers import Image, Labels, Shapes, Points, Vectors
 from enum import Enum
 import pathlib
-import toolz as tz
-from magicgui import magicgui, magic_factory
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
+import toolz as tz
+from magicgui import magic_factory
 from skimage.transform import (
         AffineTransform,
         EuclideanTransform,
         SimilarityTransform,
         )
+
 
 class AffineTransformChoices(Enum):
     affine = AffineTransform
@@ -72,10 +77,13 @@ def next_layer_callback(
                 ref_mat = reference_image_layer.affine.affine_matrix
                 # must shrink ndims of affine matrix if dims of image layer is bigger than moving layer #####
                 if reference_image_layer.ndim > moving_image_layer.ndim:
-                    ref_mat = convert_affine_matrix_to_ndims(ref_mat, moving_image_layer.ndim)
+                    ref_mat = convert_affine_matrix_to_ndims(
+                            ref_mat, moving_image_layer.ndim
+                            )
                 # must pad affine matrix with identity matrix if dims of moving layer smaller #####
                 moving_image_layer.affine = convert_affine_matrix_to_ndims(
-                    (ref_mat @ mat.params), moving_image_layer.ndim)
+                        (ref_mat @ mat.params), moving_image_layer.ndim
+                        )
                 if output is not None:
                     np.savetxt(output, np.asarray(mat.params), delimiter=',')
             viewer.layers.selection.active = reference_points_layer
@@ -85,12 +93,16 @@ def next_layer_callback(
             reset_view(viewer, reference_image_layer)
 
 
-# make a bindable function to shut things down
-@magicgui
 def close_affinder(layers, callback):
     for layer in layers:
         layer.events.data.disconnect(callback)
         layer.mode = 'pan_zoom'
+
+
+# make function to remove points layers after finishing
+def remove_pts_layers(viewer, layers):
+    for layer in layers:
+        viewer.layers.remove(layer)
 
 
 def convert_affine_to_ndims(affine, target_ndims):
@@ -98,24 +110,28 @@ def convert_affine_to_ndims(affine, target_ndims):
         return affine
     new_affine = deepcopy(affine)
     if affine.ndim < target_ndims:
-        converted_matrix = np.identity(target_ndims+1)
+        converted_matrix = np.identity(target_ndims + 1)
         start_i = target_ndims - affine.ndim
         converted_matrix[start_i:, start_i:] = affine.affine_matrix
         new_affine.affine_matrix = converted_matrix
     elif affine.ndim > target_ndims:
-        new_affine.affine_matrix =  affine.affine_matrix[affine.ndim-target_ndims:, affine.ndim-target_ndims:]
+        new_affine.affine_matrix = (
+                affine.affine_matrix[affine.ndim - target_ndims:,
+                                     affine.ndim - target_ndims:]
+                )
 
     return new_affine
 
+
 def convert_affine_matrix_to_ndims(matrix, target_ndims):
-    affine_ndim = matrix.shape[0]-1
+    affine_ndim = matrix.shape[0] - 1
     if affine_ndim < target_ndims:
-        converted_matrix = np.identity(target_ndims+1)
+        converted_matrix = np.identity(target_ndims + 1)
         start_i = target_ndims - affine_ndim
         converted_matrix[start_i:, start_i:] = matrix
         return converted_matrix
     elif affine_ndim > target_ndims:
-        return  matrix[affine_ndim-target_ndims:, affine_ndim-target_ndims:]
+        return matrix[affine_ndim - target_ndims:, affine_ndim - target_ndims:]
     else:
         return matrix
 
@@ -153,12 +169,21 @@ def _on_affinder_main_init(widget):
             )
     _update_unique_choices(widget.moving, widget.reference.current_choice)
 
+
 @magic_factory(
         widget_init=_on_affinder_main_init,
         call_button='Start',
         layout='vertical',
         output={'mode': 'w'},
         viewer={'visible': False, 'label': ' '},
+        delete_pts={
+                'label':
+                        'Delete points layers when done',
+                'tooltip': (
+                        'If ticked, the points layers used in alignment '
+                        'will be deleted when clicking "Finish".'
+                        ),
+                },
         )
 def start_affinder(
         viewer: 'napari.viewer.Viewer',
@@ -168,7 +193,8 @@ def start_affinder(
         moving: 'napari.layers.Layer',
         moving_points: Optional['napari.layers.Points'] = None,
         model: AffineTransformChoices,
-        output: Optional[pathlib.Path] = None
+        output: Optional[pathlib.Path] = None,
+        delete_pts: bool = False,
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
@@ -190,7 +216,9 @@ def start_affinder(
                 new_layer = viewer.add_points(
                         ndim=estimation_ndim, # ndims of all points layers same lowest ndim of reference or moving
                         name=layer.name + '_pts',
-                        affine=convert_affine_to_ndims(layer.affine, estimation_ndim),
+                        affine=convert_affine_to_ndims(
+                                layer.affine, estimation_ndim
+                                ),
                         face_color=[color],
                         )
                 points_layers[i] = new_layer
@@ -216,13 +244,18 @@ def start_affinder(
         viewer.layers.selection.active = pts_layer0
         pts_layer0.mode = 'add'
 
-        close_affinder.layers.bind(points_layers)
-        close_affinder.callback.bind(callback)
-
+        start_affinder.close = functools.partial(
+                close_affinder, points_layers, callback
+                )
+        start_affinder.remove_points_layers = functools.partial(
+                remove_pts_layers, viewer, points_layers
+                )
         # change the button/mode for next run
         start_affinder._call_button.text = 'Finish'
     else:  # we are in Finish mode
-        close_affinder()
+        start_affinder.close()
+        if delete_pts:
+            start_affinder.remove_points_layers()
         start_affinder._call_button.text = 'Start'
 
 

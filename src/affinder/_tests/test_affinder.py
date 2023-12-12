@@ -84,7 +84,10 @@ nuc3D = generate_all_layer_types(nuclei3D, nuclei3D_pts, nuclei3D_labels)
 
 # 2D as reference, 2D as moving
 @pytest.mark.parametrize(
-        "reference,moving,model_class", [p for p in product(nuc2D, nuc2D_t, [t for t in AffineTransformChoices])]
+        "reference,moving,model_class", [
+                p for p in
+                product(nuc2D, nuc2D_t, [t for t in AffineTransformChoices])
+                ]
         )
 def test_2D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
 
@@ -113,7 +116,9 @@ def test_2D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
     actual_affine = np.asarray(l1.affine)
 
     model = model_class.value(dimensionality=2)
-    model.estimate(viewer.layers['layer1_pts'].data, viewer.layers['layer0_pts'].data)
+    model.estimate(
+            viewer.layers['layer1_pts'].data, viewer.layers['layer0_pts'].data
+            )
     expected_affine = model.params
 
     np.testing.assert_allclose(
@@ -123,7 +128,10 @@ def test_2D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
 
 # 3D as reference, 2D as moving
 @pytest.mark.parametrize(
-        "reference,moving,model_class", [p for p in product(nuc3D, nuc2D_t, [t for t in AffineTransformChoices])]
+        "reference,moving,model_class", [
+                p for p in
+                product(nuc3D, nuc2D_t, [t for t in AffineTransformChoices])
+                ]
         )
 def test_3D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
 
@@ -154,7 +162,9 @@ def test_3D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
     actual_affine = np.asarray(l1.affine)
 
     model = model_class.value(dimensionality=2)
-    model.estimate(viewer.layers['layer1_pts'].data, viewer.layers['layer0_pts'].data)
+    model.estimate(
+            viewer.layers['layer1_pts'].data, viewer.layers['layer0_pts'].data
+            )
     expected_affine = model.params
 
     np.testing.assert_allclose(
@@ -239,3 +249,36 @@ def test_load_affine(tmp_path):
     widget(layer, affile)
 
     np.testing.assert_allclose(layer.affine, affine)
+
+
+@pytest.mark.parametrize('remove_pts', [True, False])
+def test_remove_points_layers(remove_pts, make_napari_viewer):
+    """Check whether remove_points_layer option actually removes the layers."""
+    ref_im = np.random.random((5, 5))
+    mov_im = np.random.random((5, 5))
+    ref_pts = np.array([[1, 1], [2, 2], [1, 4]], dtype=float)
+    mov_pts = np.array([[4, 1], [2, 2], [1, 4]], dtype=float)
+
+    viewer = make_napari_viewer()
+    ref_layer = viewer.add_image(ref_im)
+    mov_layer = viewer.add_image(mov_im)
+    qtwidget, widget = viewer.window.add_plugin_dock_widget(
+            'affinder', 'Start affinder'
+            )
+    widget(
+            viewer=viewer,
+            reference=ref_layer,
+            moving=mov_layer,
+            model=AffineTransformChoices.affine,
+            )
+    viewer.layers['ref_im_pts'].data = ref_pts
+    viewer.layers['mov_im_pts'].data = mov_pts
+
+    widget(delete_pts=remove_pts)  # close the widget
+
+    assert widget._call_button.text == 'Start'
+
+    assert remove_pts != any(
+            pt_layer in viewer.layers
+            for pt_layer in ['ref_im_pts', 'mov_im_pts']
+            )
