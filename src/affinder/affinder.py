@@ -108,10 +108,10 @@ def remove_pts_layers(viewer, layers):
 def convert_affine_to_ndims(affine, target_ndim):
     """Either embed or slice an affine matrix to match the target ndims."""
     affine = np.asarray(affine)
-    diff = affine.ndim - target_ndim
+    diff = affine.ndim + 1 - target_ndim
     if diff == 0:
         out = affine
-    if diff < 0:
+    elif diff < 0:
         # target is larger, so embed
         out = np.identity(target_ndim + 1)
         out[-diff:, -diff:] = affine
