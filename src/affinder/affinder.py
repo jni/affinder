@@ -77,11 +77,11 @@ def next_layer_callback(
                 ref_mat = reference_image_layer.affine.affine_matrix
                 # must shrink ndims of affine matrix if dims of image layer is bigger than moving layer #####
                 if reference_image_layer.ndim > moving_image_layer.ndim:
-                    ref_mat = convert_affine_matrix_to_ndims(
+                    ref_mat = convert_affine_to_ndims(
                             ref_mat, moving_image_layer.ndim
                             )
                 # must pad affine matrix with identity matrix if dims of moving layer smaller #####
-                moving_image_layer.affine = convert_affine_matrix_to_ndims(
+                moving_image_layer.affine = convert_affine_to_ndims(
                         (ref_mat @ mat.params), moving_image_layer.ndim
                         )
                 if output is not None:
@@ -119,19 +119,6 @@ def convert_affine_to_ndims(affine, target_ndim):
         out = affine[diff:, diff:]
 
     return out
-
-
-def convert_affine_matrix_to_ndims(matrix, target_ndims):
-    affine_ndim = matrix.shape[0] - 1
-    if affine_ndim < target_ndims:
-        converted_matrix = np.identity(target_ndims + 1)
-        start_i = target_ndims - affine_ndim
-        converted_matrix[start_i:, start_i:] = matrix
-        return converted_matrix
-    elif affine_ndim > target_ndims:
-        return matrix[affine_ndim - target_ndims:, affine_ndim - target_ndims:]
-    else:
-        return matrix
 
 
 def _update_unique_choices(widget, choice_name):
