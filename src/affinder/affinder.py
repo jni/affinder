@@ -105,22 +105,20 @@ def remove_pts_layers(viewer, layers):
         viewer.layers.remove(layer)
 
 
-def convert_affine_to_ndims(affine, target_ndims):
-    if affine.ndim == target_ndims:
-        return affine
-    new_affine = deepcopy(affine)
-    if affine.ndim < target_ndims:
-        converted_matrix = np.identity(target_ndims + 1)
-        start_i = target_ndims - affine.ndim
-        converted_matrix[start_i:, start_i:] = affine.affine_matrix
-        new_affine.affine_matrix = converted_matrix
-    elif affine.ndim > target_ndims:
-        new_affine.affine_matrix = (
-                affine.affine_matrix[affine.ndim - target_ndims:,
-                                     affine.ndim - target_ndims:]
-                )
+def convert_affine_to_ndims(affine, target_ndim):
+    """Either embed or slice an affine matrix to match the target ndims."""
+    affine = np.asarray(affine)
+    diff = affine.ndim - target_ndim
+    if diff == 0:
+        out = affine
+    if diff < 0:
+        # target is larger, so embed
+        out = np.identity(target_ndim + 1)
+        out[-diff:, -diff:] = affine
+    else:  # diff > 0
+        out = affine[diff:, diff:]
 
-    return new_affine
+    return out
 
 
 def convert_affine_matrix_to_ndims(matrix, target_ndims):
