@@ -81,16 +81,12 @@ nuc2D_t = generate_all_layer_types(
         )
 nuc3D = generate_all_layer_types(nuclei3D, nuclei3D_pts, nuclei3D_labels)
 
-################
-################
-################
-
 
 # 2D as reference, 2D as moving
 @pytest.mark.parametrize(
-        "reference,moving", [p for p in product(nuc2D, nuc2D_t)]
+        "reference,moving,model_class", [p for p in product(nuc2D, nuc2D_t, [t for t in AffineTransformChoices])]
         )
-def test_2D_2D(make_napari_viewer, tmp_path, reference, moving):
+def test_2D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
 
     viewer = make_napari_viewer()
 
@@ -107,17 +103,18 @@ def test_2D_2D(make_napari_viewer, tmp_path, reference, moving):
             viewer=viewer,
             reference=l0,
             moving=l1,
-            model=AffineTransformChoices.affine,
+            model=model_class,
             output=tmp_path / 'my_affine.txt'
             )
 
     viewer.layers['layer0_pts'].data = nuclei2D_2Dpts
     viewer.layers['layer1_pts'].data = nuclei2D_transformed_2Dpts
 
-    actual_affine = np.asarray(viewer.layers['layer1'].affine)
-    expected_affine = np.array([[0.54048889, 0.8468468, -30.9685414],
-                                [-0.78297398, 0.52668962, 177.6241674],
-                                [0., 0., 1.]])
+    actual_affine = np.asarray(l1.affine)
+
+    model = model_class.value(dimensionality=2)
+    model.estimate(viewer.layers['layer1_pts'].data, viewer.layers['layer0_pts'].data)
+    expected_affine = model.params
 
     np.testing.assert_allclose(
             actual_affine, expected_affine, rtol=10, atol=1e-10
@@ -126,9 +123,9 @@ def test_2D_2D(make_napari_viewer, tmp_path, reference, moving):
 
 # 3D as reference, 2D as moving
 @pytest.mark.parametrize(
-        "reference,moving", [p for p in product(nuc3D, nuc2D)]
+        "reference,moving,model_class", [p for p in product(nuc3D, nuc2D_t, [t for t in AffineTransformChoices])]
         )
-def test_3D_2D(make_napari_viewer, tmp_path, reference, moving):
+def test_3D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
 
     viewer = make_napari_viewer()
 
@@ -138,7 +135,7 @@ def test_3D_2D(make_napari_viewer, tmp_path, reference, moving):
 
     # affinder currently changes the moving layer data when dims are different
     # so need to copy
-    l1 = viewer.add_layer(copy(moving))
+    l1 = viewer.add_layer(moving)
     viewer.layers[-1].name = "layer1"
     viewer.layers[-1].colormap = "magenta"
 
@@ -147,71 +144,18 @@ def test_3D_2D(make_napari_viewer, tmp_path, reference, moving):
             viewer=viewer,
             reference=l0,
             moving=l1,
-            model=AffineTransformChoices.Euclidean,
+            model=model_class,
             output=tmp_path / 'my_affine.txt'
             )
 
     viewer.layers['layer0_pts'].data = nuclei3D_2Dpts
-    viewer.layers['layer1_pts'].data = nuclei2D_2Dpts
+    viewer.layers['layer1_pts'].data = nuclei2D_transformed_2Dpts
 
-    actual_affine = np.asarray(viewer.layers['layer1'].affine)
-    # start_affinder currently makes a clone of moving layer when it's of
-    # type Points of Vectors and not same dimensions as reference layer - so l1
-    # is a redundant layer that is no longer used as the real moving layer -
-    # this is why we use viewer.layers['layer1] instead of l1
+    actual_affine = np.asarray(l1.affine)
 
-    expected_affine = np.array(
-            [[0.00000000e+00, 0.00000000e+00, 3.00000000e+01],
-             [1.00000000e+00, 2.89023467e-17, 0.00000000e+00],
-             [-7.90288925e-18, 1.00000000e+00, 1.42108547e-14]]
-            )
-
-    np.testing.assert_allclose(
-            actual_affine, expected_affine, rtol=10, atol=1e-10
-            )
-
-
-# 2D as reference, 3D as moving
-@pytest.mark.parametrize(
-        "reference,moving", [p for p in product(nuc2D, nuc3D)]
-        )
-def test_2D_3D(make_napari_viewer, tmp_path, reference, moving):
-
-    viewer = make_napari_viewer()
-
-    l0 = viewer.add_layer(reference)
-    viewer.layers[-1].name = "layer0"
-    viewer.layers[-1].colormap = "green"
-
-    # affinder currently changes the moving layer data when dims are different
-    # so need to copy
-    l1 = viewer.add_layer(copy(moving))
-    viewer.layers[-1].name = "layer1"
-    viewer.layers[-1].colormap = "magenta"
-
-    my_widget_factory = start_affinder()
-    my_widget_factory(
-            viewer=viewer,
-            reference=l0,
-            moving=l1,
-            model=AffineTransformChoices.Euclidean,
-            output=tmp_path / 'my_affine.txt'
-            )
-
-    viewer.layers['layer0_pts'].data = nuclei2D_2Dpts
-    viewer.layers['layer1_pts'].data = nuclei3D_2Dpts
-
-    actual_affine = np.asarray(viewer.layers['layer1'].affine)
-    # start_affinder currently makes a clone of moving layer when it's of
-    # type Points of Vectors and not same dimensions as reference layer - so l1
-    # is a redundant layer that is no longer used as the real moving layer -
-    # this is why we use viewer.layers['layer1] instead of l1
-    expected_affine = np.array(
-            [[1.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00],
-             [0.00000000e+00, 1.000000e+00, 2.890235e-17, 0.000000e+00],
-             [0.00000000e+00, -7.902889e-18, 1.000000e+00, 1.421085e-14],
-             [0.00000000e+00, 0.000000e+00, 0.000000e+00, 1.000000e+00]]
-            )
+    model = model_class.value(dimensionality=2)
+    model.estimate(viewer.layers['layer1_pts'].data, viewer.layers['layer0_pts'].data)
+    expected_affine = model.params
 
     np.testing.assert_allclose(
             actual_affine, expected_affine, rtol=10, atol=1e-10

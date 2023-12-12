@@ -73,10 +73,9 @@ def next_layer_callback(
                 # must shrink ndims of affine matrix if dims of image layer is bigger than moving layer #####
                 if reference_image_layer.ndim > moving_image_layer.ndim:
                     ref_mat = convert_affine_matrix_to_ndims(ref_mat, moving_image_layer.ndim)
-                moving_points_layer.affine = (ref_mat @ mat.params)
                 # must pad affine matrix with identity matrix if dims of moving layer smaller #####
                 moving_image_layer.affine = convert_affine_matrix_to_ndims(
-                    moving_points_layer.affine.affine_matrix, ndims(moving_image_layer))
+                    (ref_mat @ mat.params), moving_image_layer.ndim)
                 if output is not None:
                     np.savetxt(output, np.asarray(mat.params), delimiter=',')
             viewer.layers.selection.active = reference_points_layer
@@ -92,32 +91,6 @@ def close_affinder(layers, callback):
     for layer in layers:
         layer.events.data.disconnect(callback)
         layer.mode = 'pan_zoom'
-
-
-
-def ndims(layer):
-    if isinstance(layer, Image) or isinstance(layer, Labels):
-        return layer.data.ndim
-    elif isinstance(layer, Shapes):
-        # list of s shapes, containing n * D of n points with D dimensions
-        return layer.data[0].shape[1]
-    elif isinstance(layer, Points):
-        # (n, D) array of n points with D dimensions
-        return layer.data.shape[-1]
-    elif isinstance(layer, Vectors):
-        # (n, 2, D) of n vectors with start pt and projections in D dimensions
-        return layer.data.shape[-1]
-    else:
-        raise Warning(
-                layer, "layer type is not currently supported - cannot "
-                "find its ndims."
-                )
-
-def add_zeros_at_start_of_last_axis(arr):
-    upsize_last_axis = lambda size: size[:-1] + (size[-1] + 1,)
-    new_arr = np.zeros(upsize_last_axis(arr.shape))
-    new_arr[..., 1:] = arr
-    return new_arr
 
 
 def convert_affine_to_ndims(affine, target_ndims):
@@ -145,57 +118,6 @@ def convert_affine_matrix_to_ndims(matrix, target_ndims):
         return  matrix[affine_ndim-target_ndims:, affine_ndim-target_ndims:]
     else:
         return matrix
-
-# this will take a long time for vectors and points if lots of dimensions need
-# to be padded
-def expand_dims(layer, target_ndims, viewer, extract_index=0):
-    """
-    will add empty dimensions to layer until its dimensions are target_ndims
-    """
-    while ndims(layer) < target_ndims:
-        if isinstance(layer, Image) or isinstance(layer, Labels):
-            # add dimension to beginning of dimension list
-            layer.data = np.expand_dims(layer.data, axis=0)
-        elif isinstance(layer, Shapes):
-            # list of s shapes, containing n * D of n points with D dimensions
-            layer.data = [
-                    add_zeros_at_start_of_last_axis(l) for l in layer.data
-                    ]
-        elif isinstance(layer, Points):
-            # (n, D) array of n points with D dimensions
-            #layer.data =  add_zeros_at_start_of_last_axis(layer.data)
-            new_arr = add_zeros_at_start_of_last_axis(layer.data)
-            new_layer = napari.layers.Points(
-                    new_arr, name=layer.name, properties=layer.properties
-                    )
-            viewer.layers.remove(layer.name)
-            viewer.add_layer(new_layer)
-            layer = new_layer
-
-        elif isinstance(layer, Vectors):
-            # (n, 2, D) of n vectors with start pt and projections in D dimensions
-            n, b, D = layer.data.shape
-            new_arr = np.zeros((n, b, D + 1))
-            new_arr[:, 0, :] = add_zeros_at_start_of_last_axis(
-                    layer.data[:, 0, :]
-                    )
-            new_arr[:, 1, :] = add_zeros_at_start_of_last_axis(
-                    layer.data[:, 1, :]
-                    )
-            #layer.data = new_arr
-            new_layer = napari.layers.Vectors(
-                    new_arr, name=layer.name, properties=layer.properties
-                    )
-            viewer.layers.remove(layer.name)
-            viewer.add_layer(new_layer)
-            layer = new_layer
-
-        else:
-            raise Warning(
-                    layer, "layer type is not currently supported - cannot "
-                    "expand its dimensions."
-                    )
-    return layer
 
 
 def _update_unique_choices(widget, choice_name):
@@ -246,34 +168,11 @@ def start_affinder(
         moving: 'napari.layers.Layer',
         moving_points: Optional['napari.layers.Points'] = None,
         model: AffineTransformChoices,
-        output: Optional[pathlib.Path] = None,
-        keep_original_moving_layer=False,
+        output: Optional[pathlib.Path] = None
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
     if mode == 'Start':
-
-        #if model == AffineTransformChoices.affine:
-        #    if (ndims(moving) != 2) or (ndims(reference) != 2):
-        #        raise ValueError(
-        #                "Choose different model: Affine transform "
-        #                "cannot be used if layers are not both 2D. "
-        #                "Please choose a different model "
-        #                "type (not \"affine\")"
-        #                )
-
-        if ndims(moving) != ndims(reference):
-            # make copy of moving layer if selected
-            if keep_original_moving_layer:
-                print("keep og moving layer selected")
-                og_layer = deepcopy(moving)
-                og_layer.name = og_layer.name + " original"
-                viewer.add_layer(og_layer)
-
-            # pad dimensions of moving image if it's less than reference
-            #moving = expand_or_extract_ndims(moving, ndims(reference), viewer) # do not destructively change layers
-            #if ndims(moving) < ndims(reference):
-            #    moving = expand_dims(moving, target_ndims=ndims(reference), viewer=viewer)
 
         # focus on the reference layer
         reset_view(viewer, reference)
