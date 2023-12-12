@@ -186,12 +186,11 @@ def test_remove_points_layers(remove_pts, make_napari_viewer):
             reference=ref_layer,
             moving=mov_layer,
             model=AffineTransformChoices.affine,
-            delete_pts=remove_pts
             )
     viewer.layers['ref_im_pts'].data = ref_pts
     viewer.layers['mov_im_pts'].data = mov_pts
 
-    widget()  # close the widget
+    widget(delete_pts=remove_pts)  # close the widget
 
     assert widget._call_button.text == 'Start'
 
