@@ -25,6 +25,7 @@ nuclei2D_transformed_3Dpts = np.array([[0, 154.44736842, 18.95499262],
                                        [0, 195.2461879, 35.57673389],
                                        [0, 160.49163797, 116.67068372]])
 
+this_dir = Path(__file__).parent.absolute()
 nuclei3D_2Dpts = nuclei3D_pts[:, 1:]
 nuclei2D_2Dpts = nuclei2D_3Dpts[:, 1:]
 nuclei2D_transformed_2Dpts = nuclei2D_transformed_3Dpts[:, 1:]
@@ -34,21 +35,16 @@ nuclei2D = data.cells3d()[30, 1, :, :]  # (256, 256)
 nuclei2D_transformed = transform.rotate(
         nuclei2D[10:, 32:496], 60
         )  # (246, 224)
-nuclei3D = data.cells3d()[:, 1, :, :]  # (60, 256, 256)
+nuclei3d = data.cells3d()[:, 1, :, :]  # (60, 256, 256)
 
-nuclei2D_labels = zarr.open(
-        './src/affinder/_tests/nuclei2D_labels.zarr', mode='r'
-        )  #########
-nuclei2D_transformed_labels = zarr.open(
-        './src/affinder/_tests/nuclei2D_transformed_labels.zarr', mode='r'
-        )  #########
-nuclei3D_labels = zarr.open(
-        './src/affinder/_tests/nuclei3D_labels.zarr', mode='r'
-        )  #########
+nuclei2d_labels = zarr.open(this_dir / 'nuclei2D_labels.zarr', mode='r')
+nuclei2d_labels_transformed = zarr.open(
+        this_dir / 'nuclei2D_transformed_labels.zarr', mode='r'
+        )
+nuclei3d_labels = zarr.open(this_dir / 'nuclei3D_labels.zarr', mode='r')
 
 im0 = data.camera()
 im1 = transform.rotate(im0[100:, 32:496], 60)
-this_dir = Path(__file__).parent.absolute()
 labels0 = zarr.open(this_dir / 'labels0.zarr', mode='r')
 labels1 = zarr.open(this_dir / 'labels1.zarr', mode='r')
 
@@ -74,12 +70,12 @@ def generate_all_layer_types(image, pts, labels):
     return layers
 
 
-nuc2D = generate_all_layer_types(nuclei2D, nuclei2D_2Dpts, nuclei2D_labels)
+nuc2D = generate_all_layer_types(nuclei2D, nuclei2D_2Dpts, nuclei2d_labels)
 nuc2D_t = generate_all_layer_types(
         nuclei2D_transformed, nuclei2D_transformed_2Dpts,
-        nuclei2D_transformed_labels
+        nuclei2d_labels_transformed
         )
-nuc3D = generate_all_layer_types(nuclei3D, nuclei3D_pts, nuclei3D_labels)
+nuc3D = generate_all_layer_types(nuclei3d, nuclei3D_pts, nuclei3d_labels)
 
 
 # 2D as reference, 2D as moving
