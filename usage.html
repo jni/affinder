@@ -1,15 +1,15 @@
 <!doctype html>
-<html class="no-js">
+<html class="no-js" lang="en" data-content_root="./">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="Welcome to affinder’s documentation!" href="index.html" />
 
-    <meta name="generator" content="sphinx-4.5.0, furo 2022.09.29"/>
+    <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
         <title>Using affinder - affinder documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=d81277517bee4d6b0349d71bb2661d4890b5617c" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
     
     
 
@@ -149,7 +149,7 @@
   <span class="sidebar-brand-text">affinder  documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
-  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
   <input type="hidden" name="check_keywords" value="yes">
   <input type="hidden" name="area" value="default">
 </form>
@@ -191,9 +191,9 @@
         </div>
         <article role="main">
           <section id="using-affinder">
-<h1>Using affinder<a class="headerlink" href="#using-affinder" title="Permalink to this headline">#</a></h1>
+<h1>Using affinder<a class="headerlink" href="#using-affinder" title="Link to this heading">#</a></h1>
 <section id="description">
-<h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">#</a></h2>
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
 <p>This GUI plugin allows you to quickly find the affine matrix mapping
 one image to another using manual correspondence points annotation.</p>
 <p>More simply, this plugin allows you to select corresponding points
@@ -207,7 +207,7 @@ Your browser does not support the video tag.
 </video>
 </section>
 <section id="who-is-this-for">
-<h2>Who is This For?<a class="headerlink" href="#who-is-this-for" title="Permalink to this headline">#</a></h2>
+<h2>Who is This For?<a class="headerlink" href="#who-is-this-for" title="Link to this heading">#</a></h2>
 <p>This is a simple plugin which can be used on any 2D images, provided
 they can be loaded as layers into napari. The images need not be the same
 file format and this plugin also works with labels layers.</p>
@@ -215,7 +215,7 @@ file format and this plugin also works with labels layers.</p>
 they perform in the background based on the reference points selected.</p>
 </section>
 <section id="how-to-guide">
-<h2>How to Guide<a class="headerlink" href="#how-to-guide" title="Permalink to this headline">#</a></h2>
+<h2>How to Guide<a class="headerlink" href="#how-to-guide" title="Link to this heading">#</a></h2>
 <p>You will need a combination of two or more 2D image and/or labels layers
 loaded into napari. Once you have installed affinder, you can find it in
 the dock widgets menu.</p>
@@ -225,7 +225,7 @@ loaded into napari. Select a layer to use as reference, and another to
 transform.</p>
 <p><img alt="Dropdowns allow you to select the reference and moving layers" src="https://i.imgur.com/Tdbm1sX.png" /></p>
 <p>Next, you can select the transformation model to use (affine is selected by default
-and is the least rigid transformation of those available). See <span class="xref myst">below</span> for a
+and is the least rigid transformation of those available). See <a class="reference internal" href="#transformation-models"><span class="xref myst">below</span></a> for a
 description of the different models.</p>
 <p>Finally, you can optionally select a path to a text file for saving out the
 resulting transformation matrix.</p>
@@ -244,7 +244,7 @@ are happy with the alignment. Affinder will switch focus between
 reference and moving image with each point.</p>
 <p>Click Finish to exit affinder.</p>
 <section id="transformation-models">
-<h3>Transformation Models<a class="headerlink" href="#transformation-models" title="Permalink to this headline">#</a></h3>
+<h3>Transformation Models<a class="headerlink" href="#transformation-models" title="Link to this heading">#</a></h3>
 <p>There are three transformation models available for use with affinder.
 They are listed here in order of increasing rigidity in the types of
 transforms they will allow. The eponymous Affine Transform is the
@@ -267,12 +267,12 @@ translation and reflection but not scaling or shearing.</p></li>
 </section>
 </section>
 <section id="getting-help">
-<h2>Getting Help<a class="headerlink" href="#getting-help" title="Permalink to this headline">#</a></h2>
+<h2>Getting Help<a class="headerlink" href="#getting-help" title="Link to this heading">#</a></h2>
 <p>If you find a bug with affinder, or would like support with using it, please raise an
 issue on the <a class="reference external" href="https://github.com/jni/affinder">GitHub repository</a>.</p>
 </section>
 <section id="how-to-cite">
-<h2>How to Cite<a class="headerlink" href="#how-to-cite" title="Permalink to this headline">#</a></h2>
+<h2>How to Cite<a class="headerlink" href="#how-to-cite" title="Link to this heading">#</a></h2>
 <p>Many plugins may be used in the course of published (or publishable) research, as well as
 during conference talks and other public facing events. If you’d like to be cited in
 a particular format, or have a DOI you’d like used, you should provide that information here.</p>
@@ -308,9 +308,7 @@ a particular format, or have a DOI you’d like used, you should provide that in
             
           </div>
           <div class="right-details">
-            <div class="icons">
-              
-            </div>
+            
           </div>
         </div>
         
@@ -348,10 +346,9 @@ a particular format, or have a DOI you’d like used, you should provide that in
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/scripts/furo.js"></script>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=32e29ea5"></script>
     </body>
 </html>
