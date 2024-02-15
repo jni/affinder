@@ -90,15 +90,13 @@ def test_2D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
     viewer = make_napari_viewer()
 
     l0 = viewer.add_layer(reference)
-    viewer.layers[-1].name = "layer0"
-    viewer.layers[-1].colormap = "green"
+    l0.name = "layer0"
 
     l1 = viewer.add_layer(moving)
-    viewer.layers[-1].name = "layer1"
-    viewer.layers[-1].colormap = "magenta"
+    l1.name = "layer1"
 
-    my_widget_factory = start_affinder()
-    my_widget_factory(
+    affinder_widget = start_affinder()
+    affinder_widget(
             viewer=viewer,
             reference=l0,
             moving=l1,
@@ -134,17 +132,13 @@ def test_3D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
     viewer = make_napari_viewer()
 
     l0 = viewer.add_layer(reference)
-    viewer.layers[-1].name = "layer0"
-    viewer.layers[-1].colormap = "green"
+    l0.name = "layer0"
 
-    # affinder currently changes the moving layer data when dims are different
-    # so need to copy
     l1 = viewer.add_layer(moving)
-    viewer.layers[-1].name = "layer1"
-    viewer.layers[-1].colormap = "magenta"
+    l1.name = "layer1"
 
-    my_widget_factory = start_affinder()
-    my_widget_factory(
+    affinder_widget = start_affinder()
+    affinder_widget(
             viewer=viewer,
             reference=l0,
             moving=l1,
