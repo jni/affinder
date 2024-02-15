@@ -10,43 +10,7 @@ from pathlib import Path
 from copy import copy
 from scipy import ndimage as ndi
 
-nuclei3D_pts = np.array([[30., 68.47649186, 67.08770344],
-                         [30., 85.14195298, 51.81103074],
-                         [30., 104.58499096, 43.94122966],
-                         [30., 154.58137432, 113.38065099]])
-
-nuclei2D_3Dpts = np.array([[0, 68.47649186, 67.08770344],
-                           [0, 85.14195298, 51.81103074],
-                           [0, 104.58499096, 43.94122966],
-                           [0, 154.58137432, 113.38065099]])
-
-nuclei2D_transformed_3Dpts = np.array([[0, 154.44736842, 18.95499262],
-                                       [0, 176.10600098, 24.49557304],
-                                       [0, 195.2461879, 35.57673389],
-                                       [0, 160.49163797, 116.67068372]])
-
-this_dir = Path(__file__).parent.absolute()
-nuclei3D_2Dpts = nuclei3D_pts[:, 1:]
-nuclei2D_2Dpts = nuclei2D_3Dpts[:, 1:]
-nuclei2D_transformed_2Dpts = nuclei2D_transformed_3Dpts[:, 1:]
-
-# get reference and moving layer types
-nuclei2D = data.cells3d()[30, 1, :, :]  # (256, 256)
-nuclei2D_transformed = transform.rotate(
-        nuclei2D[10:, 32:496], 60
-        )  # (246, 224)
-nuclei3d = data.cells3d()[:, 1, :, :]  # (60, 256, 256)
-
-nuclei2d_labels = zarr.open(this_dir / 'nuclei2D_labels.zarr', mode='r')
-nuclei2d_labels_transformed = zarr.open(
-        this_dir / 'nuclei2D_transformed_labels.zarr', mode='r'
-        )
-nuclei3d_labels = zarr.open(this_dir / 'nuclei3D_labels.zarr', mode='r')
-
-im0 = data.camera()
-im1 = transform.rotate(im0[100:, 32:496], 60)
-labels0 = zarr.open(this_dir / 'labels0.zarr', mode='r')
-labels1 = zarr.open(this_dir / 'labels1.zarr', mode='r')
+from affinder import _test_data as dat
 
 
 def make_vector_border(layer_pts):
@@ -61,7 +25,7 @@ def make_vector_border(layer_pts):
 def generate_all_layer_types(image, pts, labels):
     layers = [
             napari.layers.Image(image),
-            napari.layers.Shapes(pts),
+            #napari.layers.Shapes(pts, shape_type='polygon'),
             napari.layers.Points(pts),
             napari.layers.Labels(labels),
             napari.layers.Vectors(make_vector_border(pts)),
@@ -70,22 +34,31 @@ def generate_all_layer_types(image, pts, labels):
     return layers
 
 
-nuc2D = generate_all_layer_types(nuclei2D, nuclei2D_2Dpts, nuclei2d_labels)
-nuc2D_t = generate_all_layer_types(
-        nuclei2D_transformed, nuclei2D_transformed_2Dpts,
-        nuclei2d_labels_transformed
+layers2d = generate_all_layer_types(
+        dat.nuclei2d, dat.nuclei2d_points, dat.nuclei2d_labels
         )
-nuc3D = generate_all_layer_types(nuclei3d, nuclei3D_pts, nuclei3d_labels)
+layers2d_transformed = generate_all_layer_types(
+        dat.nuclei2d_rotated_translated,
+        dat.nuclei2d_points_rotated_translated,
+        dat.nuclei2d_labels_rotated_translated,
+        )
+layers3d = generate_all_layer_types(
+        dat.nuclei, dat.nuclei_points, dat.nuclei_labels
+        )
+layers3d_transformed = generate_all_layer_types(
+        dat.nuclei_rotated_translated,
+        dat.nuclei_points_rotated_translated,
+        dat.nuclei_labels_rotated_translated,
+        )
 
 
 # 2D as reference, 2D as moving
 @pytest.mark.parametrize(
-        "reference,moving,model_class", [
-                p for p in
-                product(nuc2D, nuc2D_t, [t for t in AffineTransformChoices])
-                ]
+        "reference,moving,model_class",
+        product(layers2d, layers2d_transformed, AffineTransformChoices)
         )
-def test_2D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
+def test_2d_2d(make_napari_viewer, tmp_path, reference, moving, model_class):
+    """Test a 2D reference layer with a 2D moving layer."""
 
     viewer = make_napari_viewer()
 
@@ -104,8 +77,8 @@ def test_2D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
             output=tmp_path / 'my_affine.txt'
             )
 
-    viewer.layers['layer0_pts'].data = nuclei2D_2Dpts
-    viewer.layers['layer1_pts'].data = nuclei2D_transformed_2Dpts
+    viewer.layers['layer0_pts'].data = dat.nuclei2d_points
+    viewer.layers['layer1_pts'].data = dat.nuclei2d_points_rotated_translated
 
     actual_affine = np.asarray(l1.affine)
 
@@ -122,12 +95,15 @@ def test_2D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
 
 # 3D as reference, 2D as moving
 @pytest.mark.parametrize(
-        "reference,moving,model_class", [
-                p for p in
-                product(nuc3D, nuc2D_t, [t for t in AffineTransformChoices])
-                ]
+        "reference,moving,model_class",
+        product(layers3d, layers2d_transformed, AffineTransformChoices)
         )
-def test_3D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
+def test_3d_2d(make_napari_viewer, tmp_path, reference, moving, model_class):
+    """Test a 3D reference layer with a 2D moving layer.
+
+    The estimation dimension is always the minimum of the two, so this test
+    uses 2D points to estimate the transform.
+    """
 
     viewer = make_napari_viewer()
 
@@ -146,8 +122,8 @@ def test_3D_2D(make_napari_viewer, tmp_path, reference, moving, model_class):
             output=tmp_path / 'my_affine.txt'
             )
 
-    viewer.layers['layer0_pts'].data = nuclei3D_2Dpts
-    viewer.layers['layer1_pts'].data = nuclei2D_transformed_2Dpts
+    viewer.layers['layer0_pts'].data = dat.nuclei2d_points
+    viewer.layers['layer1_pts'].data = dat.nuclei2d_points_rotated_translated
 
     actual_affine = np.asarray(l1.affine)
 
