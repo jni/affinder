@@ -61,12 +61,9 @@ def test_layer_types(make_napari_viewer, tmp_path, reference, moving):
     viewer = make_napari_viewer()
 
     l0 = viewer.add_layer(reference)
-    viewer.layers[-1].name = "layer0"
-    viewer.layers[-1].colormap = "green"
-
+    l0.name = 'layer0'
     l1 = viewer.add_layer(moving)
-    viewer.layers[-1].name = "layer1"
-    viewer.layers[-1].colormap = "magenta"
+    l1.name = 'layer1'
 
     my_widget_factory = start_affinder()
     my_widget_factory(
