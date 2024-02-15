@@ -66,7 +66,7 @@ def test_2d_2d(make_napari_viewer, tmp_path, reference, moving, model_class):
     l0.name = "layer0"
 
     l1 = viewer.add_layer(moving)
-    l1.name = "layer1"
+    l1.name = 'layer1'
 
     affinder_widget = start_affinder()
     affinder_widget(
