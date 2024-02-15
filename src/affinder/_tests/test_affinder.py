@@ -60,8 +60,10 @@ def test_layer_types(make_napari_viewer, tmp_path, reference, moving):
 
     viewer = make_napari_viewer()
 
-    l0 = viewer.add_layer(reference, name='layer0')
-    l1 = viewer.add_layer(moving, name='layer1')
+    l0 = viewer.add_layer(reference)
+    l0.name = 'layer0'
+    l1 = viewer.add_layer(moving)
+    l1.name = 'layer1'
 
     my_widget_factory = start_affinder()
     my_widget_factory(
