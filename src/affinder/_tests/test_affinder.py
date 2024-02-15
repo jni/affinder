@@ -138,6 +138,51 @@ def test_3d_2d(make_napari_viewer, tmp_path, reference, moving, model_class):
             )
 
 
+@pytest.mark.parametrize(
+        "reference,moving,model_class",
+        product(layers3d, layers3d_transformed, AffineTransformChoices)
+        )
+def test_3d_3d(make_napari_viewer, tmp_path, reference, moving, model_class):
+    """Test a 3D reference layer with a 3D moving layer.
+
+    Point clicking in 3D is hard but this should still work, for example if
+    you combine it with a plugin such as napari-threedee to click on points
+    in 3D space.
+    """
+
+    viewer = make_napari_viewer()
+
+    l0 = viewer.add_layer(reference)
+    l0.name = "layer0"
+
+    l1 = viewer.add_layer(moving)
+    l1.name = "layer1"
+
+    affinder_widget = start_affinder()
+    affinder_widget(
+            viewer=viewer,
+            reference=l0,
+            moving=l1,
+            model=model_class,
+            output=tmp_path / 'my_affine.txt'
+            )
+
+    viewer.layers['layer0_pts'].data = dat.nuclei_points
+    viewer.layers['layer1_pts'].data = dat.nuclei_points_rotated_translated
+
+    actual_affine = np.asarray(l1.affine)
+
+    model = model_class.value(dimensionality=3)
+    model.estimate(
+            viewer.layers['layer1_pts'].data, viewer.layers['layer0_pts'].data
+            )
+    expected_affine = model.params
+
+    np.testing.assert_allclose(
+            actual_affine, expected_affine, rtol=10, atol=1e-10
+            )
+
+
 def test_ensure_different_layers(make_napari_viewer):
     viewer = make_napari_viewer()
     image0 = np.random.random((50, 50))
