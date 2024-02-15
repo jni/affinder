@@ -6,24 +6,11 @@ from itertools import product
 import zarr
 import napari
 import pytest
-from scipy import ndimage as ndi
 from pathlib import Path
+from copy import copy
+from scipy import ndimage as ndi
 
-layer0_pts = np.array([[140.38371886,
-                        322.5390704], [181.91866481, 319.65803368],
-                       [176.15659138, 259.1562627],
-                       [140.14363246, 254.59462124]])
-layer1_pts = np.array([[70.94741072,
-                        117.37477536], [95.80911919, 152.00358359],
-                       [143.16475439, 118.55866623],
-                       [131.32584559, 83.33791256]])
-
-# get reference and moving layer types
-im0 = data.camera()
-im1 = transform.rotate(im0[100:, 32:496], 60)
-this_dir = Path(__file__).parent.absolute()
-labels0 = zarr.open(this_dir / 'labels0.zarr', mode='r')
-labels1 = zarr.open(this_dir / 'labels1.zarr', mode='r')
+from affinder import _test_data as dat
 
 
 def make_vector_border(layer_pts):
@@ -35,54 +22,165 @@ def make_vector_border(layer_pts):
     return vectors
 
 
-vectors0 = make_vector_border(layer0_pts)
-vectors1 = make_vector_border(layer1_pts)
+def generate_all_layer_types(image, pts, labels):
+    layers = [
+            napari.layers.Image(image),
+            #napari.layers.Shapes(pts, shape_type='polygon'),
+            napari.layers.Points(pts),
+            napari.layers.Labels(labels),
+            napari.layers.Vectors(make_vector_border(pts)),
+            ]
 
-ref = [
-        napari.layers.Image(im0),
-        napari.layers.Shapes(layer0_pts),
-        napari.layers.Points(layer0_pts),
-        napari.layers.Labels(labels0),
-        napari.layers.Vectors(vectors0),
-        ]
-mov = [
-        napari.layers.Image(im1),
-        napari.layers.Shapes(layer1_pts),
-        napari.layers.Points(layer1_pts),
-        napari.layers.Labels(labels1),
-        napari.layers.Vectors(vectors1),
-        ]
-# TODO add tracks layer types, after multidim affine support added
+    return layers
 
 
-@pytest.mark.parametrize("reference,moving", [p for p in product(ref, mov)])
-def test_layer_types(make_napari_viewer, tmp_path, reference, moving):
+layers2d = generate_all_layer_types(
+        dat.nuclei2d, dat.nuclei2d_points, dat.nuclei2d_labels
+        )
+layers2d_transformed = generate_all_layer_types(
+        dat.nuclei2d_rotated_translated,
+        dat.nuclei2d_points_rotated_translated,
+        dat.nuclei2d_labels_rotated_translated,
+        )
+layers3d = generate_all_layer_types(
+        dat.nuclei, dat.nuclei_points, dat.nuclei_labels
+        )
+layers3d_transformed = generate_all_layer_types(
+        dat.nuclei_rotated_translated,
+        dat.nuclei_points_rotated_translated,
+        dat.nuclei_labels_rotated_translated,
+        )
+
+
+# 2D as reference, 2D as moving
+@pytest.mark.parametrize(
+        "reference,moving,model_class",
+        product(layers2d, layers2d_transformed, AffineTransformChoices)
+        )
+def test_2d_2d(make_napari_viewer, tmp_path, reference, moving, model_class):
+    """Test a 2D reference layer with a 2D moving layer."""
 
     viewer = make_napari_viewer()
 
     l0 = viewer.add_layer(reference)
-    l0.name = 'layer0'
+    l0.name = "layer0"
+
     l1 = viewer.add_layer(moving)
     l1.name = 'layer1'
 
-    my_widget_factory = start_affinder()
-    my_widget_factory(
+    affinder_widget = start_affinder()
+    affinder_widget(
             viewer=viewer,
             reference=l0,
             moving=l1,
-            model=AffineTransformChoices.affine,
+            model=model_class,
             output=tmp_path / 'my_affine.txt'
             )
 
-    viewer.layers['layer0_pts'].data = layer0_pts
-    viewer.layers['layer1_pts'].data = layer1_pts
+    viewer.layers['layer0_pts'].data = dat.nuclei2d_points
+    viewer.layers['layer1_pts'].data = dat.nuclei2d_points_rotated_translated
 
     actual_affine = np.asarray(l1.affine)
-    expected_affine = np.array([[0.48155037, 0.85804854, 5.43577937],
-                                [-0.88088632, 0.49188026, 328.20642821],
-                                [0., 0., 1.]])
 
-    np.testing.assert_allclose(actual_affine, expected_affine)
+    model = model_class.value(dimensionality=2)
+    model.estimate(
+            viewer.layers['layer1_pts'].data, viewer.layers['layer0_pts'].data
+            )
+    expected_affine = model.params
+
+    np.testing.assert_allclose(
+            actual_affine, expected_affine, rtol=10, atol=1e-10
+            )
+
+
+# 3D as reference, 2D as moving
+@pytest.mark.parametrize(
+        "reference,moving,model_class",
+        product(layers3d, layers2d_transformed, AffineTransformChoices)
+        )
+def test_3d_2d(make_napari_viewer, tmp_path, reference, moving, model_class):
+    """Test a 3D reference layer with a 2D moving layer.
+
+    The estimation dimension is always the minimum of the two, so this test
+    uses 2D points to estimate the transform.
+    """
+
+    viewer = make_napari_viewer()
+
+    l0 = viewer.add_layer(reference)
+    l0.name = "layer0"
+
+    l1 = viewer.add_layer(moving)
+    l1.name = "layer1"
+
+    affinder_widget = start_affinder()
+    affinder_widget(
+            viewer=viewer,
+            reference=l0,
+            moving=l1,
+            model=model_class,
+            output=tmp_path / 'my_affine.txt'
+            )
+
+    viewer.layers['layer0_pts'].data = dat.nuclei2d_points
+    viewer.layers['layer1_pts'].data = dat.nuclei2d_points_rotated_translated
+
+    actual_affine = np.asarray(l1.affine)
+
+    model = model_class.value(dimensionality=2)
+    model.estimate(
+            viewer.layers['layer1_pts'].data, viewer.layers['layer0_pts'].data
+            )
+    expected_affine = model.params
+
+    np.testing.assert_allclose(
+            actual_affine, expected_affine, rtol=10, atol=1e-10
+            )
+
+
+@pytest.mark.parametrize(
+        "reference,moving,model_class",
+        product(layers3d, layers3d_transformed, AffineTransformChoices)
+        )
+def test_3d_3d(make_napari_viewer, tmp_path, reference, moving, model_class):
+    """Test a 3D reference layer with a 3D moving layer.
+
+    Point clicking in 3D is hard but this should still work, for example if
+    you combine it with a plugin such as napari-threedee to click on points
+    in 3D space.
+    """
+
+    viewer = make_napari_viewer()
+
+    l0 = viewer.add_layer(reference)
+    l0.name = "layer0"
+
+    l1 = viewer.add_layer(moving)
+    l1.name = "layer1"
+
+    affinder_widget = start_affinder()
+    affinder_widget(
+            viewer=viewer,
+            reference=l0,
+            moving=l1,
+            model=model_class,
+            output=tmp_path / 'my_affine.txt'
+            )
+
+    viewer.layers['layer0_pts'].data = dat.nuclei_points
+    viewer.layers['layer1_pts'].data = dat.nuclei_points_rotated_translated
+
+    actual_affine = np.asarray(l1.affine)
+
+    model = model_class.value(dimensionality=3)
+    model.estimate(
+            viewer.layers['layer1_pts'].data, viewer.layers['layer0_pts'].data
+            )
+    expected_affine = model.params
+
+    np.testing.assert_allclose(
+            actual_affine, expected_affine, rtol=10, atol=1e-10
+            )
 
 
 def test_ensure_different_layers(make_napari_viewer):

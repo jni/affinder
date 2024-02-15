@@ -1,7 +1,7 @@
 napari-plugin-engine>=0.1.9
 napari>=0.4.3
 numpy
-scikit-image
+scikit-image>=0.19.2
 magicgui>=0.2.5,!=0.2.7
-napari
 toolz
+zarr

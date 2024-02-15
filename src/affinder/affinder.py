@@ -3,6 +3,11 @@ import pathlib
 import warnings
 from enum import Enum
 from typing import Optional
+import napari
+from napari.layers import Image, Labels, Shapes, Points, Vectors
+from enum import Enum
+import pathlib
+from copy import deepcopy
 
 import numpy as np
 import toolz as tz
@@ -23,7 +28,10 @@ class AffineTransformChoices(Enum):
 def reset_view(viewer: 'napari.Viewer', layer: 'napari.layers.Layer'):
     if viewer.dims.ndisplay != 2:
         return
-    extent = layer.extent.world[:, viewer.dims.displayed]
+    if len(viewer.dims.displayed) == layer.extent.world.shape[1]:
+        extent = layer.extent.world
+    else:
+        extent = layer.extent.world[:, viewer.dims.displayed]
     size = extent[1] - extent[0]
     center = extent[0] + size/2
     viewer.camera.center = center
@@ -43,7 +51,7 @@ def next_layer_callback(
         moving_image_layer,
         moving_points_layer,
         model_class,
-        output,
+        output
         ):
     pts0, pts1 = reference_points_layer.data, moving_points_layer.data
     n0, n1 = len(pts0), len(pts1)
@@ -63,12 +71,18 @@ def next_layer_callback(
             # we just added enough points:
             # estimate transform, go back to layer0
             if n0 > ndim:
-                mat = calculate_transform(pts0, pts1, model_class=model_class)
-                moving_image_layer.affine = (
-                        reference_image_layer.affine.affine_matrix @ mat.params
+                mat = calculate_transform(
+                        pts0, pts1, ndim, model_class=model_class
                         )
-                moving_points_layer.affine = (
-                        reference_image_layer.affine.affine_matrix @ mat.params
+                ref_mat = reference_image_layer.affine.affine_matrix
+                # must shrink ndims of affine matrix if dims of image layer is bigger than moving layer #####
+                if reference_image_layer.ndim > moving_image_layer.ndim:
+                    ref_mat = convert_affine_to_ndims(
+                            ref_mat, moving_image_layer.ndim
+                            )
+                # must pad affine matrix with identity matrix if dims of moving layer smaller #####
+                moving_image_layer.affine = convert_affine_to_ndims(
+                        (ref_mat @ mat.params), moving_image_layer.ndim
                         )
                 if output is not None:
                     np.savetxt(output, np.asarray(mat.params), delimiter=',')
@@ -89,6 +103,22 @@ def close_affinder(layers, callback):
 def remove_pts_layers(viewer, layers):
     for layer in layers:
         viewer.layers.remove(layer)
+
+
+def convert_affine_to_ndims(affine, target_ndim):
+    """Either embed or slice an affine matrix to match the target ndims."""
+    affine_matrix = np.asarray(affine)
+    diff = np.shape(affine_matrix)[0] - 1 - target_ndim
+    if diff == 0:
+        out = affine_matrix
+    elif diff < 0:
+        # target is larger, so embed
+        out = np.identity(target_ndim + 1)
+        out[-diff:, -diff:] = affine_matrix
+    else:  # diff > 0
+        out = affine_matrix[diff:, diff:]
+
+    return out
 
 
 def _update_unique_choices(widget, choice_name):
@@ -129,7 +159,10 @@ def _on_affinder_main_init(widget):
         widget_init=_on_affinder_main_init,
         call_button='Start',
         layout='vertical',
-        output={'mode': 'w', 'label': 'Save transformation as', 'filter': '*.txt'},
+        output={
+                'mode': 'w', 'label': 'Save transformation as', 'filter':
+                        '*.txt'
+                },
         viewer={'visible': False, 'label': ' '},
         delete_pts={
                 'label':
@@ -154,6 +187,7 @@ def start_affinder(
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
     if mode == 'Start':
+
         # focus on the reference layer
         reset_view(viewer, reference)
         # set points layer for each image
@@ -161,20 +195,23 @@ def start_affinder(
         # Use C0 and C1 from matplotlib color cycle
         points_layers_to_add = [(reference, (0.122, 0.467, 0.706, 1.0)),
                                 (moving, (1.0, 0.498, 0.055, 1.0))]
+
         # make points layer if it was not specified
+        estimation_ndim = min(reference.ndim, moving.ndim)
         for i in range(len(points_layers)):
             if points_layers[i] is None:
                 layer, color = points_layers_to_add[i]
                 new_layer = viewer.add_points(
-                        ndim=layer.ndim,
+                        ndim=estimation_ndim, # ndims of all points layers same lowest ndim of reference or moving
                         name=layer.name + '_pts',
-                        affine=layer.affine,
+                        affine=convert_affine_to_ndims(
+                                layer.affine, estimation_ndim
+                                ),
                         face_color=[color],
                         )
                 points_layers[i] = new_layer
         pts_layer0 = points_layers[0]
         pts_layer1 = points_layers[1]
-
         # make a callback for points added
         callback = next_layer_callback(
                 viewer=viewer,
@@ -183,7 +220,7 @@ def start_affinder(
                 moving_image_layer=moving,
                 moving_points_layer=pts_layer1,
                 model_class=model.value,
-                output=output,
+                output=output
                 )
         pts_layer0.events.data.connect(callback)
         pts_layer1.events.data.connect(callback)
@@ -210,7 +247,7 @@ def start_affinder(
         start_affinder._call_button.text = 'Start'
 
 
-def calculate_transform(src, dst, model_class=AffineTransform):
+def calculate_transform(src, dst, ndim, model_class=AffineTransform):
     """Calculate transformation matrix from matched coordinate pairs.
 
     Parameters
@@ -227,6 +264,11 @@ def calculate_transform(src, dst, model_class=AffineTransform):
     transform
         scikit-image Transformation object
     """
-    model = model_class()
-    model.estimate(dst, src)  # we want the inverse
+    # convert points to correct dimension (from right bottom corner)
+    # pos_val = lambda x: x if x > 0 else 0
+
+    # do transform
+    model = model_class(dimensionality=ndim)
+    model.estimate(dst, src)  # we want
+    # the inverse
     return model
