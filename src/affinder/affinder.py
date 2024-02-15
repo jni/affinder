@@ -129,7 +129,7 @@ def _on_affinder_main_init(widget):
         widget_init=_on_affinder_main_init,
         call_button='Start',
         layout='vertical',
-        output={'mode': 'w'},
+        output={'mode': 'w', 'label': 'Save transformation as', 'filter': '*.txt'},
         viewer={'visible': False, 'label': ' '},
         delete_pts={
                 'label':
