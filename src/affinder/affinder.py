@@ -84,6 +84,9 @@ def next_layer_callback(
                 moving_image_layer.affine = convert_affine_to_ndims(
                         (ref_mat @ mat.params), moving_image_layer.ndim
                         )
+                moving_points_layer.affine = convert_affine_to_ndims(
+                        (ref_mat @ mat.params), moving_image_layer.ndim
+                        )
                 if output is not None:
                     np.savetxt(output, np.asarray(mat.params), delimiter=',')
             viewer.layers.selection.active = reference_points_layer
