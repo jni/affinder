@@ -25,3 +25,10 @@ contributions:
     display_name: Apply affine
   - command: affinder.load_affine
     display_name: Load affine
+  menus:
+    napari/layers/register:
+    - command: affinder.start_affinder
+    napari/layers/transform:
+    - command: affinder.copy_affine
+    - command: affinder.apply_affine
+    - command: affinder.load_affine
