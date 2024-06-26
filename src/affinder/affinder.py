@@ -55,23 +55,45 @@ def next_layer_callback(
         output,
         undo_stack,
         ):
+    i = 0
+    print(f'running callback {i}')
+    i += 1
     pts0, pts1 = reference_points_layer.data, moving_points_layer.data
+    print(f'running callback {i}')
+    i += 1
     n0, n1 = len(pts0), len(pts1)
+    print(f'running callback {i}')
+    i += 1
     ndim = pts0.shape[1]
+    print(f'running callback {i}')
+    i += 1
     undo_item = []
+    print(f'running callback {i}')
+    i += 1
     # add transforms to the undo stack
     for layer in [moving_points_layer, moving_image_layer]:
         undo_item.append((layer, 'affine', np.asarray(layer.affine)))
     # add points data to the undo stack
+    print(f'running callback {i}')
+    i += 1
     for layer in [reference_points_layer, moving_points_layer]:
         undo_item.append((layer, 'data', np.copy(layer.data)))
     # add current layer ordering to undo stack
+    print(f'running callback {i}')
+    i += 1
     undo_item.append(
-            viewer.layers, 'move_multiple', [l.name for l in viewer.layers]
+            (viewer.layers, 'move_multiple', [l.name for l in viewer.layers])
             )
     # add current layer selection to undo stack
-    undo_item.append(viewer.layers, 'selection', set(viewer.layers.selection))
+    print(f'running callback {i}')
+    i += 1
+    undo_item.append(
+            (viewer.layers, 'selection', set(viewer.layers.selection))
+            )
+    print(f'running callback {i}')
+    i += 1
     undo_stack.append(undo_item)
+    print('done with the undo stuff')
     if reference_points_layer in viewer.layers.selection:
         if n0 < ndim + 1:
             return
@@ -98,6 +120,9 @@ def next_layer_callback(
                             )
                 # must pad affine matrix with identity matrix if dims of moving layer smaller #####
                 moving_image_layer.affine = convert_affine_to_ndims(
+                        (ref_mat @ mat.params), moving_image_layer.ndim
+                        )
+                moving_points_layer.affine = convert_affine_to_ndims(
                         (ref_mat @ mat.params), moving_image_layer.ndim
                         )
                 if output is not None:
@@ -186,9 +211,12 @@ def undo(stack):
     for obj, attr, value in top:
         with obj.events.blocker_all():
             if ismethod(meth := getattr(obj, attr)):
-                meth(value)
+                # Note: we assume for now that this is exactly
+                # viewer.layers.move_multiple
+                meth([obj.index(v) for v in value])
             else:
                 setattr(obj, attr, value)
+    # TODO: after all the event blocking, we need to update/refresh everything
 
 
 @magic_factory(
@@ -224,7 +252,7 @@ def start_affinder(
 
     if mode == 'Start':
         undo_stack = HashableList()
-        viewer.bind_key('z', undo)
+        viewer.bind_key('u', lambda *args: undo(stack=undo_stack))
         # focus on the reference layer
         reset_view(viewer, reference)
         # set points layer for each image
