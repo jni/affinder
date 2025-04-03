@@ -187,7 +187,7 @@ def start_affinder(
         output: Optional[pathlib.Path] = None,
         delete_pts: bool = False,
         min_point_size: int = 20,
-        max_point_size: int = 100,
+        max_point_size: int = 40,
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
