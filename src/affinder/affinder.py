@@ -2,12 +2,13 @@ import functools
 import pathlib
 import warnings
 from enum import Enum
-from typing import Optional
 import napari
 from napari.layers import Image, Labels, Shapes, Points, Vectors
 from enum import Enum
 import pathlib
 from copy import deepcopy
+from typing import Optional, Annotated
+from inspect import ismethod
 
 import numpy as np
 import toolz as tz
@@ -51,11 +52,48 @@ def next_layer_callback(
         moving_image_layer,
         moving_points_layer,
         model_class,
-        output
+        output,
+        undo_stack,
         ):
+    i = 0
+    print(f'running callback {i}')
+    i += 1
     pts0, pts1 = reference_points_layer.data, moving_points_layer.data
+    print(f'running callback {i}')
+    i += 1
     n0, n1 = len(pts0), len(pts1)
+    print(f'running callback {i}')
+    i += 1
     ndim = pts0.shape[1]
+    print(f'running callback {i}')
+    i += 1
+    undo_item = []
+    print(f'running callback {i}')
+    i += 1
+    # add transforms to the undo stack
+    for layer in [moving_points_layer, moving_image_layer]:
+        undo_item.append((layer, 'affine', np.asarray(layer.affine)))
+    # add points data to the undo stack
+    print(f'running callback {i}')
+    i += 1
+    for layer in [reference_points_layer, moving_points_layer]:
+        undo_item.append((layer, 'data', np.copy(layer.data)))
+    # add current layer ordering to undo stack
+    print(f'running callback {i}')
+    i += 1
+    undo_item.append(
+            (viewer.layers, 'move_multiple', [l.name for l in viewer.layers])
+            )
+    # add current layer selection to undo stack
+    print(f'running callback {i}')
+    i += 1
+    undo_item.append(
+            (viewer.layers, 'selection', set(viewer.layers.selection))
+            )
+    print(f'running callback {i}')
+    i += 1
+    undo_stack.append(undo_item)
+    print('done with the undo stuff')
     if reference_points_layer in viewer.layers.selection:
         if n0 < ndim + 1:
             return
@@ -158,6 +196,29 @@ def _on_affinder_main_init(widget):
     _update_unique_choices(widget.moving, widget.reference.current_choice)
 
 
+class HashableList(list):
+
+    def __hash__(self):
+        return id(self)
+
+
+def undo(stack):
+    print('undoing')
+    try:
+        top = stack.pop()
+    except IndexError:
+        return
+    for obj, attr, value in top:
+        with obj.events.blocker_all():
+            if ismethod(meth := getattr(obj, attr)):
+                # Note: we assume for now that this is exactly
+                # viewer.layers.move_multiple
+                meth([obj.index(v) for v in value])
+            else:
+                setattr(obj, attr, value)
+    # TODO: after all the event blocking, we need to update/refresh everything
+
+
 @magic_factory(
         widget_init=_on_affinder_main_init,
         call_button='Start',
@@ -190,7 +251,8 @@ def start_affinder(
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
     if mode == 'Start':
-
+        undo_stack = HashableList()
+        viewer.bind_key('u', lambda *args: undo(stack=undo_stack))
         # focus on the reference layer
         reset_view(viewer, reference)
         # set points layer for each image
@@ -223,7 +285,8 @@ def start_affinder(
                 moving_image_layer=moving,
                 moving_points_layer=pts_layer1,
                 model_class=model.value,
-                output=output
+                output=output,
+                undo_stack=undo_stack,
                 )
         pts_layer0.events.data.connect(callback)
         pts_layer1.events.data.connect(callback)
