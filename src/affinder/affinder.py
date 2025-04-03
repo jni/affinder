@@ -186,6 +186,8 @@ def start_affinder(
         model: AffineTransformChoices,
         output: Optional[pathlib.Path] = None,
         delete_pts: bool = False,
+        min_point_size: int = 20,
+        max_point_size: int = 100,
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
@@ -212,7 +214,7 @@ def start_affinder(
                                 ),
                         face_color=[color],
                         size=3,
-                        canvas_size_limits=(10, 50),
+                        canvas_size_limits=(min_point_size, max_point_size),
                         )
                 points_layers[i] = new_layer
         pts_layer0 = points_layers[0]
