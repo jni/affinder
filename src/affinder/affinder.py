@@ -211,6 +211,8 @@ def start_affinder(
                                 layer.affine, estimation_ndim
                                 ),
                         face_color=[color],
+                        size=3,
+                        canvas_size_limits=(10, 50),
                         )
                 points_layers[i] = new_layer
         pts_layer0 = points_layers[0]
