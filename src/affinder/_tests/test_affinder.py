@@ -293,3 +293,46 @@ def test_remove_points_layers(remove_pts, make_napari_viewer):
             pt_layer in viewer.layers
             for pt_layer in ['ref_im_pts', 'mov_im_pts']
             )
+
+
+@pytest.mark.parametrize(
+        "pairwise_mode",
+        [True, False]
+        )
+def test_clicking_flow(make_napari_viewer, tmp_path, pairwise_mode):
+    """
+    Test clicking flow:
+    In pairwise mode, adding points to the
+    reference should switch to the moving layer, and vice versa.
+    In non-pairwise mode, clicking on the reference layer should
+    not switch to the moving layer until the user has added ndim+1 points.
+    """
+
+    viewer = make_napari_viewer()
+
+    l0 = viewer.add_layer(layers2d[0])
+    l0.name = "layer0"
+
+    l1 = viewer.add_layer(layers2d_transformed[0])
+    l1.name = 'layer1'
+
+    affinder_widget = start_affinder()
+    affinder_widget(
+            viewer=viewer,
+            reference=l0,
+            moving=l1,
+            output=tmp_path / 'my_affine.txt',
+            pairwise_mode=pairwise_mode,
+            )
+
+    for i in range(8):
+        # Simulate clicking on a point on the currently active layer
+        active_layer_before_click = viewer.layers.selection.active
+        active_layer_before_click.data = np.concatenate(
+                [active_layer_before_click.data, np.random.random((1, 2))]
+                )
+        # Check automated layer switching is working as expected
+        if pairwise_mode or i in [2, 5] + [6, 7]:
+            assert viewer.layers.selection.active != active_layer_before_click
+        else:
+            assert viewer.layers.selection.active == active_layer_before_click
