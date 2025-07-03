@@ -26,8 +26,8 @@ class AffineTransformChoices(Enum):
 
 
 class InitialPointAnnotationModeChoices(Enum):
-    alternating = 'alternating'
     grouped_by_layer = 'grouped_by_layer'
+    alternating = 'alternating'
 
 
 def reset_view(viewer: 'napari.Viewer', layer: 'napari.layers.Layer'):
