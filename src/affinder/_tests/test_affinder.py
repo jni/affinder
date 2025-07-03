@@ -1,5 +1,5 @@
 from affinder import start_affinder, copy_affine, apply_affine, load_affine
-from affinder.affinder import AffineTransformChoices
+from affinder.affinder import AffineTransformChoices, InitialPointAnnotationModeChoices
 from skimage import data, transform
 import numpy as np
 from itertools import product
@@ -296,10 +296,11 @@ def test_remove_points_layers(remove_pts, make_napari_viewer):
 
 
 @pytest.mark.parametrize(
-        "pairwise_mode",
-        [True, False]
+        "initial_point_annotation_mode",
+        [InitialPointAnnotationModeChoices.alternating,
+        InitialPointAnnotationModeChoices.grouped_by_layer]
         )
-def test_clicking_flow(make_napari_viewer, tmp_path, pairwise_mode):
+def test_clicking_flow(make_napari_viewer, tmp_path, initial_point_annotation_mode):
     """
     Test clicking flow:
     In pairwise mode, adding points to the
@@ -322,7 +323,7 @@ def test_clicking_flow(make_napari_viewer, tmp_path, pairwise_mode):
             reference=l0,
             moving=l1,
             output=tmp_path / 'my_affine.txt',
-            pairwise_mode=pairwise_mode,
+            initial_point_annotation_mode=initial_point_annotation_mode,
             )
 
     for i in range(8):
@@ -332,7 +333,8 @@ def test_clicking_flow(make_napari_viewer, tmp_path, pairwise_mode):
                 [active_layer_before_click.data, np.random.random((1, 2))]
                 )
         # Check automated layer switching is working as expected
-        if pairwise_mode or i in [2, 5] + [6, 7]:
+        if initial_point_annotation_mode == InitialPointAnnotationModeChoices.alternating or\
+            i in [2, 5] + [6, 7]:
             assert viewer.layers.selection.active != active_layer_before_click
         else:
             assert viewer.layers.selection.active == active_layer_before_click
