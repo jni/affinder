@@ -25,6 +25,11 @@ class AffineTransformChoices(Enum):
     similarity = SimilarityTransform
 
 
+class InitialPointAnnotationModeChoices(Enum):
+    grouped_by_layer = 'grouped_by_layer'
+    alternating = 'alternating'
+
+
 def reset_view(viewer: 'napari.Viewer', layer: 'napari.layers.Layer'):
     if viewer.dims.ndisplay != 2:
         return
@@ -51,13 +56,14 @@ def next_layer_callback(
         moving_image_layer,
         moving_points_layer,
         model_class,
-        output
+        output,
+        initial_point_annotation_mode,
         ):
     pts0, pts1 = reference_points_layer.data, moving_points_layer.data
     n0, n1 = len(pts0), len(pts1)
     ndim = pts0.shape[1]
     if reference_points_layer in viewer.layers.selection:
-        if n0 < ndim + 1:
+        if initial_point_annotation_mode == InitialPointAnnotationModeChoices.grouped_by_layer and n0 < ndim + 1:
             return
         if n0 == ndim + 1:
             reset_view(viewer, moving_image_layer)
@@ -175,6 +181,16 @@ def _on_affinder_main_init(widget):
                         'will be deleted when clicking "Finish".'
                         ),
                 },
+        initial_point_annotation_mode={
+                'label': 'Initial point annotation',
+                'tooltip': (
+                        'Before affinder can have an initial transform estimate, it needs'
+                        'ndim + 1 points to match between reference and moving layers. '
+                        'In alternating mode, you pick one point in reference, then its '
+                        'corresponding point in moving, and so on. In grouped mode, you '
+                        'first pick ndim + 1 points in the reference layer, then ndim + 1'
+                        'in the moving layer in the same order, before alternating.'),
+                },
         )
 def start_affinder(
         viewer: 'napari.viewer.Viewer',
@@ -188,6 +204,7 @@ def start_affinder(
         delete_pts: bool = False,
         min_point_size: int = 20,
         max_point_size: int = 40,
+        initial_point_annotation_mode: InitialPointAnnotationModeChoices = InitialPointAnnotationModeChoices.grouped_by_layer,
         ):
     mode = start_affinder._call_button.text  # can be "Start" or "Finish"
 
@@ -227,7 +244,8 @@ def start_affinder(
                 moving_image_layer=moving,
                 moving_points_layer=pts_layer1,
                 model_class=model.value,
-                output=output
+                output=output,
+                initial_point_annotation_mode=initial_point_annotation_mode
                 )
         pts_layer0.events.data.connect(callback)
         pts_layer1.events.data.connect(callback)
