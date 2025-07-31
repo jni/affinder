@@ -10,6 +10,7 @@ Welcome to affinder's documentation!
    :maxdepth: 2
 
    usage
+   transform
 
 
 .. include:: ../README.md
